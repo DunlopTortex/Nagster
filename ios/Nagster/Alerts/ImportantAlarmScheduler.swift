@@ -8,13 +8,15 @@ import SwiftUI
 /// The alarm's Stop button completes it; Snooze counts down the first of the PC's snooze choices. Other snooze
 /// lengths, Dismiss and Reschedule are in the app.
 final class ImportantAlarmScheduler {
-    private let manager = AlarmManager.shared
     private let log = Logger(subsystem: "com.dgutilities.nagster", category: "alarmkit")
+
+    // AlarmManager isn't Sendable, so it is fetched where it's used rather than kept on this main-actor class.
+    private var manager: AlarmManager { AlarmManager.shared }
 
     var isAuthorized: Bool { manager.authorizationState == .authorized }
 
     func requestAuthorization() async -> Bool {
-        do { return try await manager.requestAuthorization() == .authorized } catch {
+        do { return try await Self.requestPermission() == .authorized } catch {
             log.error("AlarmKit permission request failed: \(error.localizedDescription, privacy: .public)")
             return false
         }
@@ -34,12 +36,23 @@ final class ImportantAlarmScheduler {
         for alert in wanted where !busy.contains(alert.occurrence.id) {
             guard let definition = state.definitions[alert.occurrence.definitionId] else { continue }
             do {
-                _ = try await manager.schedule(id: alert.occurrence.id,
-                                               configuration: configuration(for: alert, definition: definition, snooze: snooze))
+                try await Self.submit(id: alert.occurrence.id,
+                                      configuration: configuration(for: alert, definition: definition, snooze: snooze))
             } catch {
                 log.error("Couldn't schedule an Important alarm: \(error.localizedDescription, privacy: .public)")
             }
         }
+    }
+
+    // AlarmKit's async calls run off the main actor; these take nothing from it, so nothing non-Sendable crosses over.
+
+    nonisolated private static func requestPermission() async throws -> AlarmManager.AuthorizationState {
+        try await AlarmManager.shared.requestAuthorization()
+    }
+
+    nonisolated private static func submit(id: UUID,
+                                           configuration: sending AlarmManager.AlarmConfiguration<NagsterAlarmMetadata>) async throws {
+        _ = try await AlarmManager.shared.schedule(id: id, configuration: configuration)
     }
 
     /// Silences and removes an answered occurrence's alarm.
