@@ -36,3 +36,7 @@ dotnet build DGNaggingAlarms\DGNaggingAlarms.csproj -c Release
 dotnet run --project Tests\DGNaggingAlarms.Checks\DGNaggingAlarms.Checks.csproj -c Release
 ./build-installer.ps1
 ```
+
+## Licence
+
+Released under the [MIT Licence](LICENSE).
