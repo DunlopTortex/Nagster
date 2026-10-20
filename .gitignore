@@ -35,6 +35,8 @@ build/
 *.xcresult
 .build/
 .swiftpm/
+Payload/
+*.ipa
 
 # OS clutter
 .DS_Store

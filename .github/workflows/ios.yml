@@ -73,3 +73,26 @@ jobs:
           name: TestResults
           path: ios/TestResults.xcresult
           if-no-files-found: ignore
+
+      # An unsigned build for real iPhones, packaged as an .ipa for sideloading tools such as Sideloadly,
+      # which sign it with the installer's own Apple ID.
+      - name: Build unsigned .ipa
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Nagster.xcodeproj \
+            -scheme Nagster \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/Nagster.app Payload/
+          zip -qry Nagster-unsigned.ipa Payload
+
+      - name: Upload .ipa
+        uses: actions/upload-artifact@v5
+        with:
+          name: Nagster-ipa
+          path: ios/Nagster-unsigned.ipa
+          if-no-files-found: error
