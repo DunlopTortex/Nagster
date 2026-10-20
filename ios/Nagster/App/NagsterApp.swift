@@ -7,6 +7,7 @@ import UserNotifications
 struct NagsterApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: AppModel
+    @AppStorage(Appearance.storageKey) private var appearance = Appearance.auto
     /// Kept for the app's lifetime: the notification centre holds its delegate weakly.
     private let responder: NotificationResponder
 
@@ -35,6 +36,7 @@ struct NagsterApp: App {
                 Tab("Clipboard", systemImage: "doc.on.clipboard") { ClipboardView() }
             }
             .tint(Theme.violet)
+            .preferredColorScheme(appearance.colorScheme)
             .environment(model)
             .task {
                 await model.prepareAlerts()

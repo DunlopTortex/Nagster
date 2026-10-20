@@ -10,6 +10,7 @@ struct SettingsView: View {
     @State private var signingIn = false
     @State private var signInProblem: String?
     @State private var notificationsAllowed = true
+    @AppStorage(Appearance.storageKey) private var appearance = Appearance.auto
 
     private static let pauseChoices: [(String, TimeInterval?)] =
         [("30 minutes", 1800), ("1 hour", 3600), ("4 hours", 14_400), ("1 day", 86_400), ("Until I resume", nil)]
@@ -47,6 +48,13 @@ struct SettingsView: View {
                 } footer: {
                     Text("On the PC, turn on Settings → Web access in Nagster and set a password. Use the PC's address on your home "
                          + "network, or its Tailscale IP address to sync from anywhere.")
+                }
+
+                Section("Appearance") {
+                    Picker("Theme", selection: $appearance) {
+                        ForEach(Appearance.allCases) { Text($0.label).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
                 }
 
                 Section("Pause alerts on this iPhone") {

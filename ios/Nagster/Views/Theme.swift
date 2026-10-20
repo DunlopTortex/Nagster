@@ -37,6 +37,32 @@ enum Theme {
     }
 }
 
+/// Light or dark, chosen in Settings; Auto follows the iPhone.
+enum Appearance: String, CaseIterable, Identifiable {
+    case auto, light, dark
+
+    static let storageKey = "appearance"
+
+    var id: Self { self }
+
+    var label: String {
+        switch self {
+        case .auto: "Auto"
+        case .light: "Light"
+        case .dark: "Dark"
+        }
+    }
+
+    /// The scheme to force, or nil to follow the system.
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .auto: nil
+        case .light: .light
+        case .dark: .dark
+        }
+    }
+}
+
 extension Font {
     /// SF Rounded at a Dynamic Type style, for times and headings.
     static func rounded(_ style: Font.TextStyle, weight: Font.Weight = .semibold) -> Font {

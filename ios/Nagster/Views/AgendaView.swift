@@ -15,15 +15,8 @@ struct AgendaView: View {
                 content(now: WallTime(context.date))
             }
             .background(Theme.canvas)
-            .navigationTitle("Nagster")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Settings", systemImage: "gearshape") { showingSettings = true }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("New alarm", systemImage: "plus") { creating = true }
-                }
-            }
+            // The wordmark header replaces the system title bar on this tab.
+            .toolbar(.hidden, for: .navigationBar)
             .refreshable { await model.syncNow() }
             .safeAreaInset(edge: .bottom) { SyncStatusPill() }
             .sheet(item: $selected) { occurrence in OccurrenceSheet(occurrence: occurrence) }
@@ -45,6 +38,8 @@ struct AgendaView: View {
         let comingUp = upcoming.filter { $0.id != featured?.id }
         return ScrollView {
             VStack(alignment: .leading, spacing: 28) {
+                header
+
                 NowPanel(occurrence: featured, isRinging: !ringing.isEmpty, alsoRinging: max(ringing.count - 1, 0), now: now,
                          open: { selected = $0 }, add: { creating = true })
 
@@ -65,6 +60,38 @@ struct AgendaView: View {
             .padding(.top, 8)
             .padding(.bottom, 24)
         }
+    }
+
+    /// The app's name as a wordmark beside a small copy of its icon, with Settings and New alarm.
+    private var header: some View {
+        HStack(spacing: 12) {
+            AppMark()
+                .frame(width: 38, height: 38)
+            Text("Nagster")
+                .font(.system(size: 32, weight: .heavy, design: .rounded))
+                .tracking(-0.6)
+                .foregroundStyle(Theme.ink)
+                .accessibilityAddTraits(.isHeader)
+            Spacer()
+            Button { showingSettings = true } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(width: 42, height: 42)
+                    .foregroundStyle(Theme.ink)
+                    .background(Theme.violet.opacity(0.14), in: Circle())
+            }
+            .accessibilityLabel("Settings")
+            Button { creating = true } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 19, weight: .bold))
+                    .frame(width: 42, height: 42)
+                    .foregroundStyle(.white)
+                    .background(Theme.brand, in: Circle())
+                    .shadow(color: Theme.deep.opacity(0.3), radius: 6, y: 3)
+            }
+            .accessibilityLabel("New alarm")
+        }
+        .padding(.top, 4)
     }
 
     private func day(_ title: String, _ occurrences: some Collection<AlarmOccurrence>) -> some View {
@@ -367,5 +394,23 @@ private struct SyncStatusPill: View {
         .padding(.vertical, 8)
         .background(.ultraThinMaterial, in: Capsule())
         .padding(.bottom, 6)
+    }
+}
+
+
+/// The app icon in miniature: the clock face on its gradient tile, without the dial's progress ring.
+struct AppMark: View {
+    var body: some View {
+        GeometryReader { geometry in
+            let size = min(geometry.size.width, geometry.size.height)
+            RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
+                .fill(Theme.brand)
+                .overlay {
+                    ClockDial(time: WallTime(year: 2026, month: 1, day: 1, hour: 2, minute: 10), ringColor: .clear)
+                        .padding(size * 0.08)
+                }
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .accessibilityHidden(true)
     }
 }
