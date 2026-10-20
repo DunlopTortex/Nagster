@@ -1,4 +1,4 @@
-# DGNaggingAlarms — product and implementation plan
+# Nagster — product and implementation plan
 
 The first working release is implemented in this workspace. See [README.md](README.md) for build/run instructions and the current feature limits. The sections below remain the longer-term product roadmap.
 
@@ -14,7 +14,7 @@ A local-first Windows tray app that makes important commitments hard to forget w
 - Quick reminder accepts a title and a preset such as “in 10 minutes,” “in 1 hour,” or “tomorrow at 9.” A full editor is one click away.
 - Full editor: required title, optional description, date/time, recurrence, must-complete-by deadline, priority, category, optional alarm sound, nagging policy, and optional link or file.
 - Use explicit date/time fields and a live “Next 5 alerts” preview before saving. Natural-language entry can be added later, but should never silently interpret an ambiguous date.
-- Command-line entry points: `DGNaggingAlarms.exe -new` opens the new-alarm editor, `-quick` opens quick reminder, and `-calendar` opens the main window. A second invocation forwards its request to the already-running tray instance and exits. If the app is not running, it starts the tray instance and opens the requested window.
+- Command-line entry points: `Nagster.exe -new` opens the new-alarm editor, `-quick` opens quick reminder, and `-calendar` opens the main window. A second invocation forwards its request to the already-running tray instance and exits. If the app is not running, it starts the tray instance and opens the requested window.
 
 ### Main window
 
@@ -109,7 +109,7 @@ Include a **Preview popup** button in settings and a **Restore defaults** action
 - Snooze and reschedule an occurrence; verify deadline enforcement and durable history.
 - Leave two alarms unanswered at once; verify both remain accessible, their timers act independently, their sounds do not overlap, and neither action changes the other.
 - Verify the 30-second automatic snooze, one-hour return, three-play sound burst, one-minute sound gap when the timeout is disabled, per-alarm sound fallback, and deadline-blocked automatic snooze.
-- Run `DGNaggingAlarms.exe -new` both before and after the tray app starts; verify exactly one tray instance and one new-alarm window appear.
+- Run `Nagster.exe -new` both before and after the tray app starts; verify exactly one tray instance and one new-alarm window appear.
 - Sleep through an alarm, restart the app, and change the system time zone; verify missed alarms reconcile without duplicates.
 - Check popup placement and readability on two monitors with different scaling and with high-contrast settings.
 - Uninstall and verify startup registration and program files are removed; user data behavior is documented and selectable.

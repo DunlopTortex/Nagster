@@ -1,0 +1,211 @@
+<Window x:Class="Nagster.NewAlarmWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Nagster.Controls"
+        Title="New alarm" Icon="Assets/Alarm.ico"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="CanResize"
+        Width="640" Height="800" MinWidth="560" MinHeight="420"
+        WindowStartupLocation="CenterScreen" FontFamily="{StaticResource Font.Text}"
+        Foreground="{DynamicResource Brush.Text}" UseLayoutRounding="True">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="14" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <Border Style="{StaticResource DialogShadow}" />
+        <Border Style="{StaticResource DialogFrame}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Title bar -->
+                <Grid Background="Transparent" Margin="22,14,10,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <TextBlock x:Name="Heading" Style="{StaticResource Text.Title}" Text="Create an alarm" VerticalAlignment="Center" />
+                    <Button Style="{StaticResource Button.Close}" Content="&#xE8BB;" HorizontalAlignment="Right"
+                            IsCancel="True" ToolTip="Cancel" />
+                </Grid>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
+                    <StackPanel Margin="22,0,22,18">
+
+                        <!-- Details -->
+                        <TextBlock Style="{StaticResource Text.Section}" Text="Details" Margin="0,4,0,8" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                                    <RadioButton x:Name="TypeAlarm" Style="{StaticResource Segment}" GroupName="Type" IsChecked="True"
+                                                 Checked="Section_Changed">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xEA8F;" Style="{StaticResource Text.Glyph}" Margin="0,0,6,0" />
+                                            <TextBlock Text="Alarm" />
+                                        </StackPanel>
+                                    </RadioButton>
+                                    <RadioButton x:Name="TypeEvent" Style="{StaticResource Segment}" GroupName="Type"
+                                                 Checked="Section_Changed">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE787;" Style="{StaticResource Text.Glyph}" Margin="0,0,6,0" />
+                                            <TextBlock Text="Event" />
+                                        </StackPanel>
+                                    </RadioButton>
+                                </StackPanel>
+                                <TextBlock Text="Title" Style="{StaticResource Text.Field}" />
+                                <TextBox x:Name="TitleBox" MaxLength="160" Tag="What needs doing?" />
+                                <TextBlock Text="Description (optional)" Style="{StaticResource Text.Field}" Margin="0,12,0,6" />
+                                <TextBox x:Name="DescriptionBox" Height="64" AcceptsReturn="True" TextWrapping="Wrap"
+                                         VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- When -->
+                        <TextBlock Style="{StaticResource Text.Section}" Text="When" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock x:Name="DueLabel" Text="First alert" Style="{StaticResource Text.Field}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <DatePicker x:Name="DueDate" Width="170" SelectedDateChanged="Start_Changed" />
+                                    <controls:TimePicker x:Name="DueTime" Width="130" Margin="8,0,0,0" />
+                                </StackPanel>
+                                <StackPanel x:Name="EventPanel">
+                                    <TextBlock Text="Duration" Style="{StaticResource Text.Field}" Margin="0,14,0,6" />
+                                    <ComboBox x:Name="EventDuration" Width="170" HorizontalAlignment="Left" MaxDropDownHeight="320"
+                                              SelectionChanged="EventDuration_SelectionChanged" />
+                                    <TextBlock Text="Event ends" Style="{StaticResource Text.Field}" Margin="0,14,0,6" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <DatePicker x:Name="EventEndDate" Width="170" SelectedDateChanged="EventEnd_Changed" />
+                                        <controls:TimePicker x:Name="EventEndTime" Width="130" Margin="8,0,0,0" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                        <TextBlock Text="Remind me" Style="{StaticResource Text.Label}" />
+                                        <TextBox x:Name="ReminderMinutes" Width="64" Margin="10,0" />
+                                        <TextBlock Text="minutes before it starts" Style="{StaticResource Text.Label}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Repeat -->
+                        <TextBlock Style="{StaticResource Text.Section}" Text="Repeat" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <ComboBox x:Name="RepeatBox" Width="160" SelectedIndex="0" SelectionChanged="Section_Changed">
+                                        <ComboBoxItem Content="Once" /><ComboBoxItem Content="Minutes" /><ComboBoxItem Content="Hours" />
+                                        <ComboBoxItem Content="Daily" /><ComboBoxItem Content="Weekly" /><ComboBoxItem Content="Monthly" />
+                                        <ComboBoxItem Content="Yearly" />
+                                    </ComboBox>
+                                    <StackPanel x:Name="IntervalPanel" Orientation="Horizontal">
+                                        <TextBlock Text="every" Style="{StaticResource Text.Label}" Margin="12,0,10,0" />
+                                        <TextBox x:Name="IntervalBox" Text="1" Width="56" />
+                                        <TextBlock x:Name="IntervalUnit" Style="{StaticResource Text.Label}" Margin="10,0,0,0" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel x:Name="WeeklyPanel" Margin="0,14,0,0">
+                                    <TextBlock Text="On these days" Style="{StaticResource Text.Field}" />
+                                    <WrapPanel>
+                                        <CheckBox x:Name="Sun" Content="Sun" Style="{StaticResource Chip}" />
+                                        <CheckBox x:Name="Mon" Content="Mon" Style="{StaticResource Chip}" />
+                                        <CheckBox x:Name="Tue" Content="Tue" Style="{StaticResource Chip}" />
+                                        <CheckBox x:Name="Wed" Content="Wed" Style="{StaticResource Chip}" />
+                                        <CheckBox x:Name="Thu" Content="Thu" Style="{StaticResource Chip}" />
+                                        <CheckBox x:Name="Fri" Content="Fri" Style="{StaticResource Chip}" />
+                                        <CheckBox x:Name="Sat" Content="Sat" Style="{StaticResource Chip}" />
+                                    </WrapPanel>
+                                    <TextBlock Text="Leave all unselected to repeat on the first alert's weekday." Style="{StaticResource Text.Hint}" />
+                                </StackPanel>
+
+                                <StackPanel x:Name="MonthlyPanel" Margin="0,14,0,0">
+                                    <TextBlock Text="Monthly rule (optional)" Style="{StaticResource Text.Field}" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Day" Style="{StaticResource Text.Label}" />
+                                        <TextBox x:Name="MonthDayBox" Width="52" Margin="10,0,12,0" Tag="1–31"
+                                                 ToolTip="Blank uses the first alert's day" />
+                                        <TextBlock Text="or the" Style="{StaticResource Text.Label}" />
+                                        <ComboBox x:Name="NthBox" Width="100" SelectedIndex="0" Margin="10,0,8,0">
+                                            <ComboBoxItem Content="—" /><ComboBoxItem Content="First" /><ComboBoxItem Content="Second" />
+                                            <ComboBoxItem Content="Third" /><ComboBoxItem Content="Fourth" /><ComboBoxItem Content="Last" />
+                                        </ComboBox>
+                                        <ComboBox x:Name="NthDayBox" Width="124" SelectedIndex="0">
+                                            <ComboBoxItem Content="Sunday" /><ComboBoxItem Content="Monday" /><ComboBoxItem Content="Tuesday" />
+                                            <ComboBoxItem Content="Wednesday" /><ComboBoxItem Content="Thursday" /><ComboBoxItem Content="Friday" />
+                                            <ComboBoxItem Content="Saturday" />
+                                        </ComboBox>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel x:Name="EndPanel" Margin="0,14,0,0">
+                                    <TextBlock Text="Stop repeating (optional)" Style="{StaticResource Text.Field}" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="After" Style="{StaticResource Text.Label}" />
+                                        <DatePicker x:Name="RepeatUntil" Width="160" Margin="10,0,12,0" />
+                                        <TextBlock Text="or after" Style="{StaticResource Text.Label}" />
+                                        <TextBox x:Name="RepeatCount" Width="56" Margin="10,0" ToolTip="Total number of occurrences" />
+                                        <TextBlock Text="occurrences" Style="{StaticResource Text.Label}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Deadline -->
+                        <TextBlock Style="{StaticResource Text.Section}" Text="Must complete by" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <ComboBox x:Name="DeadlineMode" SelectedIndex="0" Width="220" HorizontalAlignment="Left"
+                                          SelectionChanged="Section_Changed">
+                                    <ComboBoxItem Content="No deadline" /><ComboBoxItem Content="A specific date and time" />
+                                    <ComboBoxItem Content="Minutes after each alert" />
+                                </ComboBox>
+                                <StackPanel x:Name="DeadlineAbsolutePanel" Orientation="Horizontal" Margin="0,12,0,0">
+                                    <DatePicker x:Name="DeadlineDate" Width="170" />
+                                    <controls:TimePicker x:Name="DeadlineTime" Width="130" Margin="8,0,0,0" />
+                                </StackPanel>
+                                <StackPanel x:Name="DeadlineRelativePanel" Orientation="Horizontal" Margin="0,12,0,0">
+                                    <TextBox x:Name="DeadlineMinutes" Width="80" />
+                                    <TextBlock Text="minutes after each alert" Style="{StaticResource Text.Label}" Margin="10,0,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sound and response -->
+                        <TextBlock Style="{StaticResource Text.Section}" Text="Sound and response" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Sound" Style="{StaticResource Text.Field}" />
+                                <controls:SoundPicker x:Name="SoundChoice" DefaultLabel="Default from Settings" />
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="16" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Auto snooze after (seconds)" Style="{StaticResource Text.Field}" />
+                                        <TextBox x:Name="ResponseOverride" Tag="Use settings" ToolTip="Blank uses settings; 0 disables" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Then snooze for" Style="{StaticResource Text.Field}" />
+                                        <TextBox x:Name="AutoSnoozeOverride" Tag="Use settings"
+                                                 ToolTip="e.g. 30m, 1h or 1d. A number on its own means minutes. Blank uses settings." />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer -->
+                <Border Grid.Row="2" Style="{StaticResource DialogFooter}">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel" MinWidth="96" Click="Cancel_Click" />
+                        <Button x:Name="SaveButton" Content="Create alarm" Style="{StaticResource Button.Accent}" MinWidth="120" Margin="8,0,0,0"
+                                IsDefault="True" Click="Save_Click" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

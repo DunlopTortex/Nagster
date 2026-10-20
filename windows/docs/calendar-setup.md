@@ -1,6 +1,6 @@
 # Calendar setup
 
-DG Nagging Alarms can turn events from your calendars into alarms. Open **Settings → Calendars →
+Nagster can turn events from your calendars into alarms. Open **Settings → Calendars →
 Manage calendars…** and add calendars in any of four ways. Each event is imported once: later
 changes to the event don't change its alarm, and deleting the alarm doesn't bring it back.
 
@@ -27,7 +27,7 @@ so the app stores it encrypted. If a link leaks, reset it in your calendar's set
 Google only lets registered apps sign in. Registration is free and takes about ten minutes.
 
 1. Open the [Google Cloud console](https://console.cloud.google.com/) and create a project, e.g.
-   "DG Nagging Alarms".
+   "Nagster".
 2. In *APIs & Services → Library*, enable the **Google Calendar API**.
 3. In *APIs & Services → OAuth consent screen*, choose **External**, give the app a name and your
    e-mail address, and add the scope `.../auth/calendar.readonly`. Add your Google account under
@@ -40,14 +40,14 @@ Google only lets registered apps sign in. Registration is free and takes about t
 **About the 7-day sign-in limit:** while the consent screen's publishing status is *Testing*,
 Google expires the sign-in after 7 days and the calendar shows "Sign in again". To avoid this,
 choose **Publish app** on the consent screen. Google then shows a "Google hasn't verified this app"
-warning when you sign in; because it's your own app, choose *Advanced → Go to DG Nagging Alarms*.
+warning when you sign in; because it's your own app, choose *Advanced → Go to Nagster*.
 Verification by Google is only needed for apps used by more than 100 people.
 
 ## Microsoft 365 (work or school) account
 
 1. Open [Microsoft Entra → App registrations](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
    and choose **New registration**.
-2. Name it "DG Nagging Alarms". Under *Supported account types*, choose accounts in **this
+2. Name it "Nagster". Under *Supported account types*, choose accounts in **this
    organizational directory only** (or *any organizational directory* if you'll connect accounts
    from several organisations).
 3. Under *Redirect URI*, choose **Public client/native (mobile & desktop)** and enter
@@ -90,5 +90,5 @@ its automation interface, so any account Outlook shows works with no extra sign-
 Use **Check** on a calendar to see what would be imported, and why other events were skipped,
 without creating any alarms.
 
-Sign-in tokens are kept in `%LOCALAPPDATA%\DGNaggingAlarms\Tokens`, encrypted for your Windows
+Sign-in tokens are kept in `%LOCALAPPDATA%\Nagster\Tokens`, encrypted for your Windows
 account. Removing a calendar deletes its tokens.

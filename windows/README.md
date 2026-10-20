@@ -1,10 +1,10 @@
-# DG Nagging Alarms
+# Nagster
 
 A Windows WPF tray application for persistent alarms and calendar events.
 
 ## Run
 
-Install with `dist/DGNaggingAlarms-Setup-0.1.0.exe`, or run the self-contained executable in `publish/DGNaggingAlarms.exe`. The installer registers the tray app to start when you sign in. The tray icon opens the calendar, new-alarm form, active-alarm center, and settings. Closing the calendar keeps alarms running in the tray; use **Exit** from the tray menu to stop the app.
+Install with `dist/Nagster-Setup-0.2.0.exe`, or run the self-contained executable in `publish/Nagster.exe`. The installer registers the tray app to start when you sign in. The tray icon opens the calendar, new-alarm form, active-alarm center, and settings. Closing the calendar keeps alarms running in the tray; use **Exit** from the tray menu to stop the app.
 
 Command-line arguments:
 
@@ -26,7 +26,8 @@ If the app is already running, a second invocation forwards its command to the r
 - Always-on-top semi-transparent popup stack with an active-alarm center for overflow.
 - Calendar import from Google, Microsoft 365, desktop Outlook and secret ICS links, with ignore
   rules and no duplicates. See [calendar setup](docs/calendar-setup.md).
-- SQLite storage at `%LOCALAPPDATA%\DGNaggingAlarms\alarms.db`.
+- SQLite storage at `%LOCALAPPDATA%\Nagster\alarms.db`. Data from DG Nagging Alarms, the app's former
+  name, is moved there automatically on first launch.
 
 **Dismiss** stops that occurrence's alert and leaves it incomplete in the agenda. **Complete** marks it done. **Reschedule** moves this occurrence's next alert and leaves the recurrence rule unchanged.
 
@@ -35,8 +36,8 @@ If the app is already running, a second invocation forwards its command to the r
 Requires the .NET 10 SDK and Inno Setup 6.
 
 ```powershell
-dotnet build DGNaggingAlarms\DGNaggingAlarms.csproj -c Release
-dotnet run --project Tests\DGNaggingAlarms.Checks\DGNaggingAlarms.Checks.csproj -c Release
+dotnet build Nagster\Nagster.csproj -c Release
+dotnet run --project Tests\Nagster.Checks\Nagster.Checks.csproj -c Release
 ./build-installer.ps1
 ```
 

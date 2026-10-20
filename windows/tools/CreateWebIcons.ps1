@@ -1,7 +1,7 @@
 # Builds the web interface icons from the shared artwork in IconArt.ps1. The home-screen icon is a full-bleed,
 # opaque square because iOS rounds the corners itself and fills transparency with black.
 . (Join-Path $PSScriptRoot 'IconArt.ps1')
-$webDir = Join-Path $PSScriptRoot '..\DGNaggingAlarms\Web'
+$webDir = Join-Path $PSScriptRoot '..\Nagster\Web'
 
 $touch = New-IconBitmap 180
 $touch.Save((Join-Path $webDir 'apple-touch-icon.png'), [System.Drawing.Imaging.ImageFormat]::Png)

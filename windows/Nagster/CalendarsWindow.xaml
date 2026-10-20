@@ -1,0 +1,212 @@
+<Window x:Class="Nagster.CalendarsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:calendars="clr-namespace:Nagster.Calendars"
+        Title="Calendars" Icon="Assets/Alarm.ico"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="CanResize"
+        Width="680" Height="800" MinWidth="580" MinHeight="460"
+        WindowStartupLocation="CenterScreen" FontFamily="{StaticResource Font.Text}"
+        Foreground="{DynamicResource Brush.Text}" UseLayoutRounding="True">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="14" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="ShowIf" />
+        <Style x:Key="AddButton" TargetType="Button" BasedOn="{StaticResource Button.Base}">
+            <Setter Property="Margin" Value="0,0,8,8" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Border Style="{StaticResource DialogShadow}" />
+        <Border Style="{StaticResource DialogFrame}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid Background="Transparent" Margin="22,14,10,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource Text.Title}" Text="Calendars" />
+                        <TextBlock Style="{StaticResource Text.Hint}"
+                                   Text="Events from these calendars become alarms automatically. Each event is imported once and never duplicated." />
+                    </StackPanel>
+                    <Button Style="{StaticResource Button.Close}" Content="&#xE8BB;" HorizontalAlignment="Right" VerticalAlignment="Top"
+                            IsCancel="True" ToolTip="Close without saving" />
+                </Grid>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
+                    <StackPanel Margin="22,0,22,18">
+
+                        <!-- Connected calendars -->
+                        <TextBlock Style="{StaticResource Text.Section}" Text="Connected calendars" Margin="0,4,0,8" />
+                        <TextBlock x:Name="NoSources" Style="{StaticResource Text.Hint}" Margin="0,0,0,10"
+                                   Text="None yet. Add one below." />
+                        <ItemsControl x:Name="Sources">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type calendars:SourceRow}">
+                                    <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <CheckBox DockPanel.Dock="Right" Style="{StaticResource Toggle}" IsChecked="{Binding Enabled}"
+                                                          VerticalAlignment="Center" ToolTip="Import from this calendar" Margin="12,0,0,0" />
+                                                <TextBlock Text="{Binding Glyph}" Style="{StaticResource Text.Glyph}" FontSize="18"
+                                                           Foreground="{DynamicResource Brush.Accent}" Margin="0,0,12,0" />
+                                                <StackPanel>
+                                                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Tag="Calendar name"
+                                                             FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Text.Hint}" Margin="2,4,0,0" />
+                                                </StackPanel>
+                                            </DockPanel>
+                                            <StackPanel Visibility="{Binding IsIcs, Converter={StaticResource ShowIf}}" Margin="0,12,0,0">
+                                                <TextBlock Text="Secret link" Style="{StaticResource Text.Field}" />
+                                                <TextBox Text="{Binding IcsUrl, UpdateSourceTrigger=PropertyChanged}" Tag="https://… or webcal://…" />
+                                            </StackPanel>
+                                            <WrapPanel Margin="0,12,0,0">
+                                                <TextBlock Text="Alarm" Style="{StaticResource Text.Label}" />
+                                                <TextBox Text="{Binding LeadMinutes, UpdateSourceTrigger=PropertyChanged}" Width="56" Margin="10,0" />
+                                                <TextBlock Text="minutes before each event" Style="{StaticResource Text.Label}" Margin="0,0,24,0" />
+                                                <CheckBox Style="{StaticResource Toggle}" IsChecked="{Binding AllCalendars}"
+                                                          Visibility="{Binding SupportsAllCalendars, Converter={StaticResource ShowIf}}"
+                                                          Content="Include all my calendars" />
+                                            </WrapPanel>
+                                            <TextBlock Text="{Binding Status}" Style="{StaticResource Text.Hint}" Margin="0,10,0,0" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                                <Button Content="Check" Click="Check_Click" Tag="{Binding}"
+                                                        ToolTip="Read the calendar and show what would become alarms, without creating any" />
+                                                <Button Content="Sign in again" Margin="8,0,0,0" Click="SignInAgain_Click" Tag="{Binding}"
+                                                        Visibility="{Binding UsesSignIn, Converter={StaticResource ShowIf}}" />
+                                                <Button Content="Remove" Margin="8,0,0,0" Click="Remove_Click" Tag="{Binding}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <WrapPanel>
+                            <Button Style="{StaticResource AddButton}" Click="AddIcs_Click" Content="+ Calendar link"
+                                    ToolTip="A secret iCal/ICS address from Google (&quot;Secret address in iCal format&quot;) or Outlook (&quot;Publish calendar&quot;)" />
+                            <Button Style="{StaticResource AddButton}" Click="AddGoogle_Click" Content="+ Google account" />
+                            <Button Style="{StaticResource AddButton}" Click="AddMicrosoft_Click" Content="+ Microsoft 365 account" />
+                            <Button x:Name="AddOutlookButton" Style="{StaticResource AddButton}" Click="AddOutlook_Click" Content="+ Outlook on this PC"
+                                    ToolTip="Classic desktop Outlook. The new Outlook for Windows can't be read by other apps." />
+                        </WrapPanel>
+                        <TextBlock x:Name="AddStatus" Style="{StaticResource Text.Hint}" />
+
+                        <!-- What to skip -->
+                        <TextBlock Style="{StaticResource Text.Section}" Text="Events to skip" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <CheckBox x:Name="SkipAllDay" Style="{StaticResource Toggle}" Content="All-day events" Margin="0,0,0,10" />
+                                <CheckBox x:Name="SkipDeclined" Style="{StaticResource Toggle}" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="Meetings I've declined" />
+                                        <TextBlock Style="{StaticResource Text.Hint}" Text="Calendar links can't tell; works for accounts and Outlook." />
+                                    </StackPanel>
+                                </CheckBox>
+                                <CheckBox x:Name="SkipFree" Style="{StaticResource Toggle}" Content="Events shown as free" />
+
+                                <TextBlock Text="Ignore rules" Style="{StaticResource Text.Label}" Margin="0,18,0,2" />
+                                <TextBlock Style="{StaticResource Text.Hint}" Margin="0,0,0,8"
+                                           Text="Events matching any rule are skipped. Matching ignores upper and lower case, e.g. Title · is · Dance." />
+                                <ItemsControl x:Name="Rules">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type calendars:RuleRow}">
+                                            <DockPanel Margin="0,0,0,8">
+                                                <Button DockPanel.Dock="Right" Style="{StaticResource Button.Icon}" Content="&#xE74D;" FontSize="13"
+                                                        Margin="6,0,0,0" ToolTip="Delete rule" Click="RemoveRule_Click" Tag="{Binding}" />
+                                                <ComboBox DockPanel.Dock="Left" Width="140" ItemsSource="{x:Static calendars:RuleRow.Fields}"
+                                                          DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Field}" />
+                                                <ComboBox DockPanel.Dock="Left" Width="120" Margin="8,0" ItemsSource="{x:Static calendars:RuleRow.Matches}"
+                                                          DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Match}" />
+                                                <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" Tag="Text to match" />
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Button Content="+ Add rule" Style="{StaticResource Button.Link}" HorizontalAlignment="Left" Click="AddRule_Click" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Timing -->
+                        <TextBlock Style="{StaticResource Text.Section}" Text="Timing" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <WrapPanel Margin="0,0,0,10">
+                                    <TextBlock Text="Import events starting in the next" Style="{StaticResource Text.Label}" />
+                                    <TextBox x:Name="LookaheadDays" Width="56" Margin="10,0" />
+                                    <TextBlock Text="days" Style="{StaticResource Text.Label}" />
+                                </WrapPanel>
+                                <WrapPanel>
+                                    <TextBlock Text="Check calendars every" Style="{StaticResource Text.Label}" />
+                                    <TextBox x:Name="IntervalMinutes" Width="56" Margin="10,0" />
+                                    <TextBlock Text="minutes" Style="{StaticResource Text.Label}" />
+                                </WrapPanel>
+                                <TextBlock Style="{StaticResource Text.Hint}" Margin="0,10,0,0"
+                                           Text="Alarms are created once and not changed afterwards, so a shorter look-ahead means fewer stale alarms if events move." />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- App registrations -->
+                        <TextBlock Style="{StaticResource Text.Section}" Text="App registrations (for signing in)" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Text.Hint}" Margin="0,0,0,12">
+                                    <Run Text="Google and Microsoft only allow sign-in from apps registered with them. Register this app once with each (free) and paste the IDs here. Step-by-step instructions are in" />
+                                    <Run Text="docs/calendar-setup.md" FontWeight="SemiBold" /><Run Text="." />
+                                </TextBlock>
+                                <TextBlock Text="Google" Style="{StaticResource Text.Label}" FontWeight="SemiBold" />
+                                <TextBlock Style="{StaticResource Text.Hint}" Margin="0,0,0,6">
+                                    <Hyperlink NavigateUri="https://console.cloud.google.com/apis/credentials" RequestNavigate="Link_RequestNavigate"
+                                               Foreground="{DynamicResource Brush.Accent}">Google Cloud console → Credentials</Hyperlink><Run Text=": create an OAuth client of type &quot;Desktop app&quot;." />
+                                </TextBlock>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Client ID" Style="{StaticResource Text.Field}" />
+                                        <TextBox x:Name="GoogleClientId" Tag="….apps.googleusercontent.com" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Client secret" Style="{StaticResource Text.Field}" />
+                                        <PasswordBox x:Name="GoogleClientSecret" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Text="Microsoft 365" Style="{StaticResource Text.Label}" FontWeight="SemiBold" />
+                                <TextBlock Style="{StaticResource Text.Hint}" Margin="0,0,0,6">
+                                    <Hyperlink NavigateUri="https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" RequestNavigate="Link_RequestNavigate"
+                                               Foreground="{DynamicResource Brush.Accent}">Microsoft Entra → App registrations</Hyperlink><Run Text=": add a &quot;Mobile and desktop&quot; platform with redirect URI http://localhost." />
+                                </TextBlock>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Application (client) ID" Style="{StaticResource Text.Field}" />
+                                        <TextBox x:Name="MicrosoftClientId" Tag="00000000-0000-0000-0000-000000000000" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Tenant (optional)" Style="{StaticResource Text.Field}" />
+                                        <TextBox x:Name="MicrosoftTenant" Tag="Any work or school account" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" Style="{StaticResource DialogFooter}">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource Text.Hint}" VerticalAlignment="Center" MaxWidth="330"
+                                   Text="Saving checks the calendars straight away." />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Cancel" MinWidth="96" Click="Cancel_Click" />
+                            <Button Content="Save" Style="{StaticResource Button.Accent}" MinWidth="110" Margin="8,0,0,0" Click="Save_Click" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -1,6 +1,6 @@
 # Builds the desktop icon (Assets\Alarm.ico) from the shared artwork in IconArt.ps1.
 . (Join-Path $PSScriptRoot 'IconArt.ps1')
-$assetDir = Join-Path $PSScriptRoot '..\DGNaggingAlarms\Assets'
+$assetDir = Join-Path $PSScriptRoot '..\Nagster\Assets'
 New-Item -ItemType Directory -Force -Path $assetDir | Out-Null
 
 # 24 and 64 cover Windows display scaling at 150% and 200%; each size is drawn natively rather than shrunk.

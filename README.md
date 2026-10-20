@@ -1,4 +1,4 @@
-# DG Nagging Alarms
+# Nagster
 
 Persistent alarms and calendar reminders that keep nagging until you deal with them. Unlike a
 standard notification, an alarm stays on screen and repeats on a schedule until you complete,
@@ -32,8 +32,8 @@ Requires the .NET 10 SDK, plus Inno Setup 6 for the installer.
 
 ```powershell
 cd windows
-dotnet build DGNaggingAlarms\DGNaggingAlarms.csproj -c Release
-dotnet run --project Tests\DGNaggingAlarms.Checks\DGNaggingAlarms.Checks.csproj -c Release
+dotnet build Nagster\Nagster.csproj -c Release
+dotnet run --project Tests\Nagster.Checks\Nagster.Checks.csproj -c Release
 ./build-installer.ps1
 ```
 
