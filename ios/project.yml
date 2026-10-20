@@ -3,7 +3,7 @@ name: Nagster
 options:
   bundleIdPrefix: com.dgutilities
   deploymentTarget:
-    iOS: "26.0"
+    iOS: "26.1"
   createIntermediateGroups: true
   developmentLanguage: en-GB
 

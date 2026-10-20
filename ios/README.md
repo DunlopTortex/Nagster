@@ -21,7 +21,7 @@ conflicts are settled.
 
 ## Requirements
 
-- iOS 26 or later (AlarmKit needs it).
+- iOS 26.1 or later (for AlarmKit).
 - Nagster on the PC with **Settings → Web access** turned on, reachable over your home network or
   Tailscale.
 

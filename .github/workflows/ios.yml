@@ -44,11 +44,14 @@ jobs:
       - name: Pick a simulator
         id: simulator
         run: |
+          # An iPhone on the newest installed iOS runtime (the app needs iOS 26.1 or later).
           udid=$(xcrun simctl list devices available --json |
-            jq -r '[.devices | to_entries[] | select(.key | contains("iOS-26")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+            jq -r '[.devices | to_entries[] | select(.key | contains("SimRuntime.iOS-"))]
+                   | sort_by(.key | sub(".*iOS-"; "") | split("-") | map(tonumber))
+                   | last | .value | map(select(.name | startswith("iPhone"))) | first | .udid')
           if [ -z "$udid" ] || [ "$udid" = "null" ]; then
             xcrun simctl list devices available
-            echo "No iOS 26 iPhone simulator found" >&2
+            echo "No iPhone simulator found" >&2
             exit 1
           fi
           echo "udid=$udid" >> "$GITHUB_OUTPUT"

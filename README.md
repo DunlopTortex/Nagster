@@ -6,10 +6,10 @@ snooze, dismiss or reschedule it.
 
 ## Platforms
 
-| Folder                 | Platform | Status                                             |
-| ---------------------- | -------- | -------------------------------------------------- |
-| [`windows/`](windows/) | Windows  | Working first release (WPF tray app, .NET 10)      |
-| [`ios/`](ios/)         | iPhone   | First version (SwiftUI, iOS 26), syncs with the PC |
+| Folder                 | Platform | Status                                               |
+| ---------------------- | -------- | ---------------------------------------------------- |
+| [`windows/`](windows/) | Windows  | Working first release (WPF tray app, .NET 10)        |
+| [`ios/`](ios/)         | iPhone   | First version (SwiftUI, iOS 26.1), syncs with the PC |
 
 ## Windows app at a glance
 

@@ -20,7 +20,7 @@ struct CompleteImportantAlarmIntent: LiveActivityIntent {
 
     func perform() async throws -> some IntentResult {
         if let target = NotificationTarget(encoded: target) {
-            AppModel.current?.complete(target)
+            await AppModel.current?.complete(target)
             await AppModel.current?.syncNow()
         }
         return .result()
@@ -44,7 +44,7 @@ struct SnoozeImportantAlarmIntent: LiveActivityIntent {
     func perform() async throws -> some IntentResult {
         // AlarmKit runs the snooze countdown itself; this records it so the PC and the phone's list agree.
         if let target = NotificationTarget(encoded: target), let length = SnoozeDuration(duration) {
-            AppModel.current?.snoozeFromAlarm(target, for: length)
+            await AppModel.current?.snoozeFromAlarm(target, for: length)
             await AppModel.current?.syncNow()
         }
         return .result()
