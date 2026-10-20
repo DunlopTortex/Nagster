@@ -11,6 +11,15 @@ enum Formatting {
         "\(day(time)) \(self.time(time))"
     }
 
+    /// A day heading: "Today", "Tomorrow" or e.g. "Wednesday 22 October".
+    static func longDay(_ time: WallTime) -> String {
+        let date = time.date()
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) { return "Today" }
+        if calendar.isDateInTomorrow(date) { return "Tomorrow" }
+        return date.formatted(.dateTime.weekday(.wide).day().month(.wide))
+    }
+
     static func day(_ time: WallTime) -> String {
         let calendar = Calendar.current
         let date = time.date()

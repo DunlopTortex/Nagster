@@ -89,6 +89,8 @@ struct ClipboardView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.canvas)
             .navigationTitle("Clipboard")
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {

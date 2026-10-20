@@ -1,7 +1,8 @@
 import NagsterCore
 import SwiftUI
 
-/// One alarm occurrence and everything that can be done with it, like the PC's alarm popup.
+/// One alarm occurrence and everything that can be done with it, like the PC's alarm popup: Complete first and
+/// largest, the snooze lengths next, then the quieter choices.
 struct OccurrenceSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var close
@@ -10,61 +11,62 @@ struct OccurrenceSheet: View {
     @State private var problem: String?
     @State private var editing = false
     @State private var confirmingDelete = false
+    @State private var completed = 0
 
     private var definition: AlarmDefinition? { model.definition(of: occurrence) }
     private var answerable: Bool { !occurrence.status.isFinished }
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    LabeledContent(definition?.isEvent == true ? "Starts" : "Due", value: Formatting.dayAndTime(occurrence.scheduledFor))
-                    if occurrence.alertAt != occurrence.scheduledFor {
-                        LabeledContent(occurrence.status == .snoozed ? "Snoozed until" : "Reminder",
-                                       value: Formatting.dayAndTime(occurrence.alertAt))
+            ScrollView {
+                VStack(alignment: .leading, spacing: 26) {
+                    header
+                    if let notes = definition?.description, !notes.isEmpty {
+                        Text(notes)
+                            .foregroundStyle(Theme.ink)
                     }
-                    if let deadline = occurrence.deadline {
-                        LabeledContent("Complete by", value: Formatting.dayAndTime(deadline))
-                    }
-                    if let description = definition?.description, !description.isEmpty {
-                        Text(description)
-                    }
-                    if !occurrence.lastAction.isEmpty {
-                        Text(occurrence.lastAction).font(.footnote).foregroundStyle(.secondary)
-                    }
-                }
-
-                if answerable {
-                    Section {
-                        Button("Complete", systemImage: "checkmark.circle.fill") { act { model.complete(occurrence) } }
-                    }
-                    Section("Snooze") {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 96))], spacing: 10) {
-                            ForEach(model.state.settings.snoozeDurations, id: \.self) { duration in
-                                Button(duration.label) { attempt { model.snooze(occurrence, for: duration) } }
-                                    .buttonStyle(.bordered)
-                            }
+                    if answerable {
+                        Button {
+                            completed += 1
+                            act { model.complete(occurrence) }
+                        } label: {
+                            Label("Complete", systemImage: "checkmark")
+                                .font(.rounded(.title3, weight: .bold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .foregroundStyle(.white)
+                                .background(Theme.brand, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                         }
-                        .padding(.vertical, 4)
-                    }
-                    Section("Reschedule") {
-                        DatePicker("Ring again at", selection: $rescheduleTo, in: Date()...)
-                        Button("Reschedule") { attempt { model.reschedule(occurrence, to: rescheduleTo) } }
-                    }
-                    Section {
-                        Button("Dismiss without completing", role: .destructive) { act { model.dismiss(occurrence) } }
-                    }
-                }
+                        .sensoryFeedback(.success, trigger: completed)
 
-                if definition != nil {
-                    Section {
-                        Button("Edit alarm", systemImage: "pencil") { editing = true }
-                        Button("Delete alarm", systemImage: "trash", role: .destructive) { confirmingDelete = true }
+                        snoozeChoices
+                        reschedule
+
+                        Button("Dismiss without completing", role: .destructive) { act { model.dismiss(occurrence) } }
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(Theme.nag)
+                            .frame(maxWidth: .infinity)
+                    } else if !occurrence.lastAction.isEmpty {
+                        Label(occurrence.lastAction,
+                              systemImage: occurrence.status == .completed ? "checkmark.circle.fill" : "xmark.circle")
+                            .foregroundStyle(Theme.secondaryText)
+                    }
+
+                    if definition != nil {
+                        Divider().overlay(Theme.rail)
+                        HStack {
+                            Button("Edit alarm", systemImage: "pencil") { editing = true }
+                                .tint(Theme.violet)
+                            Spacer()
+                            Button("Delete alarm", systemImage: "trash", role: .destructive) { confirmingDelete = true }
+                                .tint(Theme.nag)
+                        }
+                        .font(.body.weight(.medium))
                     }
                 }
+                .padding(20)
             }
-            .navigationTitle(definition?.title ?? "Alarm")
-            .navigationBarTitleDisplayMode(.inline)
+            .background(Theme.canvas)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { close() } }
             }
@@ -82,6 +84,77 @@ struct OccurrenceSheet: View {
             }
             .sheet(isPresented: $editing) {
                 if let definition { AlarmEditorView(definition: definition, nextRun: model.nextRun(of: definition.id)) }
+            }
+        }
+        .presentationCornerRadius(32)
+    }
+
+    private var header: some View {
+        HStack(alignment: .center, spacing: 16) {
+            ClockDial(time: occurrence.alertAt, progress: answerable ? 0.75 : 1,
+                      urgent: answerable && occurrence.alertAt <= model.now)
+                .frame(width: 88, height: 88)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(definition?.title ?? "Alarm")
+                    .font(.rounded(.title2, weight: .bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(3)
+                Text(whenText)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.85))
+                if let deadline = occurrence.deadline {
+                    Label("Complete by \(Formatting.dayAndTime(deadline))", systemImage: "flag.fill")
+                        .font(.footnote.weight(.semibold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .foregroundStyle(.white)
+                        .background(Theme.nag.opacity(0.85), in: Capsule())
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(18)
+        .background(Theme.brand, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+    }
+
+    private var whenText: String {
+        let due = "\(definition?.isEvent == true ? "Starts" : "Due") \(Formatting.dayAndTime(occurrence.scheduledFor))"
+        if occurrence.status == .snoozed { return "\(due), snoozed until \(Formatting.time(occurrence.alertAt))" }
+        return due
+    }
+
+    private var snoozeChoices: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Snooze for")
+                .font(.rounded(.headline))
+                .foregroundStyle(Theme.ink)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 10)], spacing: 10) {
+                ForEach(model.state.settings.snoozeDurations, id: \.self) { duration in
+                    Button { attempt { model.snooze(occurrence, for: duration) } } label: {
+                        Text(duration.label)
+                            .font(.rounded(.body))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .foregroundStyle(Theme.ink)
+                            .background(Theme.violet.opacity(0.13), in: Capsule())
+                    }
+                }
+            }
+        }
+    }
+
+    private var reschedule: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Or ring again at")
+                .font(.rounded(.headline))
+                .foregroundStyle(Theme.ink)
+            HStack {
+                DatePicker("Ring again at", selection: $rescheduleTo, in: Date()...)
+                    .labelsHidden()
+                Spacer()
+                Button("Reschedule") { attempt { model.reschedule(occurrence, to: rescheduleTo) } }
+                    .buttonStyle(.bordered)
+                    .tint(Theme.violet)
             }
         }
     }

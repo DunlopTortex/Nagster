@@ -76,6 +76,23 @@ struct AlarmEditorView: View {
     var body: some View {
         NavigationStack {
             Form {
+                // The dial's hands follow the chosen time.
+                Section {
+                    HStack(spacing: 16) {
+                        ClockDial(time: WallTime(start), ringColor: Theme.violet)
+                            .frame(width: 68, height: 68)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(start.formatted(date: .omitted, time: .shortened))
+                                .font(.system(size: 34, weight: .bold, design: .rounded).monospacedDigit())
+                                .foregroundStyle(Theme.ink)
+                            Text(start.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                                .foregroundStyle(Theme.secondaryText)
+                        }
+                    }
+                    .listRowBackground(Color.clear)
+                    .animation(.snappy, value: start)
+                }
+
                 Section {
                     Picker("Type", selection: $isEvent) {
                         Text("Alarm").tag(false)
@@ -126,6 +143,8 @@ struct AlarmEditorView: View {
                     Text("Every device lists the alarm; only these ones ring.")
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.canvas)
             .navigationTitle(existing == nil ? "New alarm" : "Edit alarm")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

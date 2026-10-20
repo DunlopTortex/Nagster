@@ -20,6 +20,7 @@ struct NagsterApp: App {
                 .fault("Couldn't open the alarm store: \(error.localizedDescription, privacy: .public)")
             container = (try? AlarmRepository.makeContainer(inMemory: true)) ?? Self.emptyContainer()
         }
+        Theme.styleNavigationBars()
         let model = AppModel(repository: AlarmRepository(container: container))
         AppModel.current = model
         _model = State(initialValue: model)
@@ -33,11 +34,12 @@ struct NagsterApp: App {
                 Tab("Alarms", systemImage: "alarm") { AgendaView() }
                 Tab("Clipboard", systemImage: "doc.on.clipboard") { ClipboardView() }
             }
+            .tint(Theme.violet)
             .environment(model)
-                .task {
-                    await model.prepareAlerts()
-                    await model.syncNow()
-                }
+            .task {
+                await model.prepareAlerts()
+                await model.syncNow()
+            }
         }
         .onChange(of: scenePhase) {
             switch scenePhase {

@@ -74,6 +74,8 @@ struct SettingsView: View {
                     Text("Without notifications this iPhone can't nag you. Important alarms ring as ordinary notifications until allowed.")
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.canvas)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
