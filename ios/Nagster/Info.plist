@@ -22,5 +22,8 @@
 	</array>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<!-- No encryption beyond what iOS provides (HTTPS, Keychain), so TestFlight doesn't ask for export compliance. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

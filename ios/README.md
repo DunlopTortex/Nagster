@@ -53,8 +53,47 @@ open Nagster.xcodeproj
 
 ## Installing on an iPhone
 
-This needs a paid Apple Developer account. In Xcode, choose your team under **Signing &
-Capabilities** for the Nagster and NagsterWidgets targets, change the bundle IDs
-(`com.dgutilities.nagster`) to ones your account owns, and run on your phone. Time-sensitive
-notifications need that capability enabled for the App ID. CI can be extended to sign and upload to
-TestFlight once the certificate, profile and App Store Connect key are added as repository secrets.
+### Sideloading the CI build (free Apple ID)
+
+Every CI run attaches an unsigned build as the **Nagster-ipa** artifact. Unzip it and install
+`Nagster-unsigned.ipa` with a tool such as Sideloadly, which signs it with your Apple ID. Turn on
+Developer Mode on the phone first. With a free Apple ID the app stops opening after 7 days until it
+is installed again.
+
+### From Xcode on a Mac
+
+Generate the project as above, then for both the Nagster and NagsterWidgets targets choose your team
+under **Signing & Capabilities** and give them bundle IDs your account can own (the widget's must
+start with the app's). A free personal team can't use Time Sensitive Notifications; remove that
+capability if Xcode objects. Choose your iPhone as the destination and press ⌘R. Running
+`xcodegen generate` again resets these signing choices.
+
+### TestFlight (paid Apple Developer account)
+
+`.github/workflows/testflight.yml` builds, signs and uploads to TestFlight when a tag such as
+`ios-v0.2.0` is pushed (the tag sets the version) or when it's run from the Actions tab. Xcode signs
+with the App Store Connect API key, so no certificates are stored in the repository. Until the
+secrets below exist, the workflow skips the upload.
+
+One-off setup:
+
+1. In the Apple Developer portal, register the app ID `com.dgutilities.nagster` with **Time
+   Sensitive Notifications**, and `com.dgutilities.nagster.widgets`. If either ID is taken, change
+   the bundle IDs in `project.yml`.
+2. In App Store Connect, create an app with that bundle ID. It never needs releasing.
+3. Under **Users and Access → Integrations → App Store Connect API**, create a key with the **App
+   Manager** role. Note its Key ID and the Issuer ID, and download the `.p8` file (only possible
+   once).
+4. Add these repository secrets in GitHub (**Settings → Secrets and variables → Actions**):
+
+   | Secret                        | Value                                                     |
+   | ----------------------------- | --------------------------------------------------------- |
+   | `APP_STORE_CONNECT_KEY_ID`    | The API key's Key ID                                      |
+   | `APP_STORE_CONNECT_ISSUER_ID` | The Issuer ID shown above the keys                        |
+   | `APP_STORE_CONNECT_KEY`       | The whole contents of the `.p8` file                      |
+   | `APPLE_TEAM_ID`               | Your Team ID, from the developer portal's Membership page |
+
+5. Install TestFlight on the iPhone and add yourself as an internal tester in App Store Connect.
+
+Each upload takes 10–30 minutes to process before it appears in TestFlight. Build numbers come from
+the workflow's run number, so they always increase. TestFlight builds stay installable for 90 days.
