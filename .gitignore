@@ -31,6 +31,10 @@ DerivedData/
 *.xcuserstate
 Pods/
 build/
+*.xcodeproj/
+*.xcresult
+.build/
+.swiftpm/
 
 # OS clutter
 .DS_Store

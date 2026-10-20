@@ -1,0 +1,60 @@
+# XcodeGen spec: run `xcodegen generate` in this folder to create Nagster.xcodeproj (not committed).
+name: Nagster
+options:
+  bundleIdPrefix: com.dgutilities
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: en-GB
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # App code runs on the main actor unless it says otherwise (the Xcode 26 default for new apps).
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+
+packages:
+  NagsterCore:
+    path: NagsterCore
+
+targets:
+  Nagster:
+    type: application
+    platform: iOS
+    sources:
+      - path: Nagster
+    dependencies:
+      - package: NagsterCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dgutilities.nagster
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Nagster
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+
+  NagsterTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: NagsterTests
+    dependencies:
+      - target: Nagster
+      - package: NagsterCore
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Nagster:
+    build:
+      targets:
+        Nagster: all
+    test:
+      targets:
+        - NagsterTests
