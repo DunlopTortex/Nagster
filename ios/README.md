@@ -11,7 +11,7 @@ device answers it on both.
   to yearly (weekdays, nth or last weekday, end date or count), event reminders, deadlines.
 - **Ring on** each alarm: all devices, the PC only or the iPhone only.
 - Rings with notifications by default. Each has **Complete**, snooze buttons and **Dismiss**, and
-  repeats at the PC's automatic snooze interval until answered.
+  repeats until answered, every 10 minutes unless you change **Nag again after** in Settings.
 - **Important** alarms ring full screen through AlarmKit, like the Clock app, even in silent mode.
 - Pauses alerts on the phone for a while, independently of the PC.
 - Shares text with the PC's clipboard: send text to the PC, or copy what's on the PC's clipboard to

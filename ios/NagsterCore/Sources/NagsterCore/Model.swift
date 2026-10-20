@@ -119,7 +119,7 @@ public struct PhoneSettings: Codable, Hashable, Sendable {
     public var autoSnooze: String
     public var responseSeconds: Int
 
-    public init(snoozeChoices: [String] = ["5m", "15m", "30m", "1h", "1d"], autoSnooze: String = "1h", responseSeconds: Int = 30) {
+    public init(snoozeChoices: [String] = ["5m", "15m", "30m", "1h", "1d"], autoSnooze: String = "10m", responseSeconds: Int = 30) {
         self.snoozeChoices = snoozeChoices
         self.autoSnooze = autoSnooze
         self.responseSeconds = responseSeconds
@@ -127,6 +127,6 @@ public struct PhoneSettings: Codable, Hashable, Sendable {
 
     public var snoozeDurations: [SnoozeDuration] { snoozeChoices.compactMap(SnoozeDuration.init) }
 
-    /// How long an unanswered alarm waits before nagging again.
-    public var autoSnoozeDuration: SnoozeDuration { SnoozeDuration(autoSnooze) ?? SnoozeDuration(amount: 1, unit: .hours) }
+    /// How long an unanswered alarm waits before nagging again on the PC.
+    public var autoSnoozeDuration: SnoozeDuration { SnoozeDuration(autoSnooze) ?? SnoozeDuration(amount: 10, unit: .minutes) }
 }

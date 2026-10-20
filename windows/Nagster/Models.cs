@@ -165,7 +165,7 @@ public sealed class AppSettings
 {
     public int ResponseSeconds { get; set; } = 30;
     /// <summary>Automatic snooze length such as "60m" or "1d".</summary>
-    public string AutoSnooze { get; set; } = "1h";
+    public string AutoSnooze { get; set; } = "10m";
 
     /// <summary>Reads the minutes-only value saved by older versions; never written back.</summary>
     [JsonPropertyName("AutoSnoozeMinutes"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

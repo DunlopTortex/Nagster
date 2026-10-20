@@ -15,9 +15,9 @@ public struct PlannedAlert: Hashable, Sendable {
 }
 
 /// Works out the phone's alerts. The PC nags by ringing again after each automatic snooze until someone answers;
-/// notifications can't wait for an answer, so the phone schedules those repeats in advance instead, at the
-/// automatic snooze interval. They stop at the deadline, or when the alarm's next occurrence comes due (which
-/// replaces it, as on the PC).
+/// notifications can't wait for an answer, so the phone schedules those repeats in advance instead, at the phone's
+/// own "nag again after" interval. They stop at the deadline, or when the alarm's next occurrence comes due
+/// (which replaces it, as on the PC).
 public enum AlertPlanner {
     /// iOS keeps only the soonest 64 pending notifications per app; a few are left spare.
     public static let notificationLimit = 60
@@ -25,9 +25,11 @@ public enum AlertPlanner {
     public static let maxNags = 24
     public static let lookAheadDays = 14
 
-    public static func plan(_ state: AlarmState, now: WallTime, pausedUntil: WallTime? = nil) -> [PlannedAlert] {
+    /// - Parameter nagEvery: How long between reminders; the PC's automatic snooze length when nil.
+    public static func plan(_ state: AlarmState, now: WallTime, pausedUntil: WallTime? = nil,
+                            nagEvery: SnoozeDuration? = nil) -> [PlannedAlert] {
         let end = now.adding(.day, lookAheadDays)
-        let step = state.settings.autoSnoozeDuration
+        let step = nagEvery ?? state.settings.autoSnoozeDuration
         let ringsHere = state.waitingOccurrences(through: end).filter { occurrence in
             guard let definition = state.definition(of: occurrence) else { return false }
             return definition.enabled && definition.devices.ringsOnPhone

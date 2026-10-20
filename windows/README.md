@@ -4,7 +4,7 @@ A Windows WPF tray application for persistent alarms and calendar events.
 
 ## Run
 
-Install with `dist/Nagster-Setup-0.3.0.exe`, or run the self-contained executable in
+Install with `dist/Nagster-Setup-0.3.1.exe`, or run the self-contained executable in
 `publish/Nagster.exe`. The installer registers the tray app to start when you sign in. The tray icon
 opens the calendar, new-alarm form, active-alarm center, and settings. Closing the calendar keeps
 alarms running in the tray; use **Exit** from the tray menu to stop the app.
@@ -26,7 +26,7 @@ If the app is already running, a second invocation forwards its command to the r
 - Calendar events with an end time and reminder offset.
 - Optional absolute or per-occurrence completion deadline. Manual and automatic snoozes cannot pass
   it.
-- Configurable snooze buttons, 30-second default response timeout, and one-hour default automatic
+- Configurable snooze buttons, 30-second default response timeout, and 10-minute default automatic
   snooze. Response rules can be overridden for each alarm.
 - Per-alarm WAV/MP3 sound with default fallback. Active sounds play in three-play bursts separated
   by one minute. Concurrent alarm sounds are serialized.

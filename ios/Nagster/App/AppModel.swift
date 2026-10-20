@@ -34,6 +34,19 @@ final class AppModel {
         didSet { defaults.set(pausedUntil, forKey: Keys.pausedUntil) }
     }
 
+    /// The choices offered for how long an unanswered alarm waits before this phone reminds you again.
+    static let nagIntervalChoices = ["1m", "2m", "5m", "10m", "15m", "30m", "1h"].compactMap(SnoozeDuration.init)
+    static let defaultNagInterval = SnoozeDuration(amount: 10, unit: .minutes)
+
+    /// How long an unanswered alarm waits before this phone reminds you again. This phone's own setting,
+    /// separate from the PC's automatic snooze length.
+    var nagInterval: SnoozeDuration {
+        didSet {
+            defaults.set(nagInterval.description, forKey: Keys.nagInterval)
+            replanAlerts()
+        }
+    }
+
     @ObservationIgnored private let repository: AlarmRepository
     @ObservationIgnored private let notifications: NotificationScheduler
     @ObservationIgnored private let importantAlarms: ImportantAlarmScheduler
@@ -44,6 +57,7 @@ final class AppModel {
     private enum Keys {
         static let pcAddress = "pcAddress"
         static let pausedUntil = "pausedUntil"
+        static let nagInterval = "nagInterval"
         static let lastSynced = "lastSynced"
         static let deviceID = "deviceID"
     }
@@ -56,6 +70,7 @@ final class AppModel {
         self.defaults = defaults
         pcAddress = defaults.string(forKey: Keys.pcAddress) ?? ""
         pausedUntil = defaults.object(forKey: Keys.pausedUntil) as? Date
+        nagInterval = defaults.string(forKey: Keys.nagInterval).flatMap(SnoozeDuration.init) ?? Self.defaultNagInterval
         (state, pendingOps) = repository.load()
         syncStatus = client == nil ? .notSetUp : .idle(lastSynced: defaults.object(forKey: Keys.lastSynced) as? Date)
     }
@@ -188,7 +203,7 @@ final class AppModel {
 
     /// Re-plans notifications and Important alarms from the current state.
     func refreshAlerts() async {
-        let plan = AlertPlanner.plan(state, now: now, pausedUntil: pausedUntil.map { WallTime($0) })
+        let plan = AlertPlanner.plan(state, now: now, pausedUntil: pausedUntil.map { WallTime($0) }, nagEvery: nagInterval)
         await notifications.schedule(plan, state: state, alarmKitRingsImportant: importantAlarms.isAuthorized)
         await importantAlarms.schedule(plan, state: state)
     }

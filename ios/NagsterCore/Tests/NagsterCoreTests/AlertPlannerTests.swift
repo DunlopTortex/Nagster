@@ -51,6 +51,13 @@ struct AlertPlannerTests {
         #expect(zip(plan, plan.dropFirst()).allSatisfy { $0.fireAt <= $1.fireAt })
     }
 
+    @Test func thePhonesOwnIntervalOverridesThePCs() {
+        let once = AlarmDefinition(title: "Bins", firstDue: nine)
+        let plan = AlertPlanner.plan(state(once, autoSnooze: "1h"), now: nine.adding(.minute, -1),
+                                     nagEvery: SnoozeDuration(amount: 10, unit: .minutes))
+        #expect(plan.prefix(3).map(\.fireAt) == [nine, nine.adding(.minute, 10), nine.adding(.minute, 20)])
+    }
+
     @Test func pausedAlertsAreSkipped() {
         let once = AlarmDefinition(title: "Later", firstDue: nine)
         let plan = AlertPlanner.plan(state(once), now: nine.adding(.minute, -1), pausedUntil: nine.adding(.minute, 90))

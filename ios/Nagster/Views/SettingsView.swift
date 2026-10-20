@@ -57,6 +57,17 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                 }
 
+                Section {
+                    Picker("Nag again after", selection: $model.nagInterval) {
+                        ForEach(AppModel.nagIntervalChoices, id: \.self) { Text($0.label).tag($0) }
+                    }
+                } header: {
+                    Text("Reminders")
+                } footer: {
+                    Text("How long an unanswered alarm waits before this iPhone reminds you again. The PC has its own "
+                         + "setting.")
+                }
+
                 Section("Pause alerts on this iPhone") {
                     if model.isPaused, let until = model.pausedUntil {
                         LabeledContent("Paused until", value: until == .distantFuture ? "you resume" : until.formatted(date: .abbreviated, time: .shortened))
