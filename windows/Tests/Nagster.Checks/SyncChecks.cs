@@ -40,15 +40,21 @@ internal static class SyncChecks
     private static SyncResponse Sync(AlarmEngine engine, long since, params SyncOp[] ops) =>
         SyncApi.Handle(new EngineActions(engine), new SyncRequest("test-phone", since, ops), DateTime.Now);
 
+    private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
+
+    /// <summary>A file from the repository's shared folder, which holds cases both apps' tests check.</summary>
+    private static string SharedFile(string name)
+    {
+        var folder = new DirectoryInfo(AppContext.BaseDirectory);
+        while (folder is not null && !File.Exists(Path.Combine(folder.FullName, "shared", name))) folder = folder.Parent;
+        return folder is null ? throw new FileNotFoundException("Couldn't find shared/" + name) : File.ReadAllText(Path.Combine(folder.FullName, "shared", name));
+    }
+
     /// <summary>The cases in shared/parity-cases.json, which the iPhone app's tests check too.</summary>
     private static void CheckParityCases(Action<bool, string> check)
     {
-        var folder = new DirectoryInfo(AppContext.BaseDirectory);
-        while (folder is not null && !File.Exists(Path.Combine(folder.FullName, "shared", "parity-cases.json"))) folder = folder.Parent;
-        check(folder is not null, "shared parity cases found");
-        if (folder is null) return;
-        using var cases = JsonDocument.Parse(File.ReadAllText(Path.Combine(folder.FullName, "shared", "parity-cases.json")));
-        var web = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        using var cases = JsonDocument.Parse(SharedFile("parity-cases.json"));
+        var web = Web;
         var failures = new List<string>();
         foreach (var item in cases.RootElement.GetProperty("recurrence").EnumerateArray())
         {
@@ -256,8 +262,18 @@ internal static class SyncChecks
             Id = Guid.Empty, DefinitionId = Guid.Empty, ScheduledFor = new DateTime(2026, 10, 20, 9, 0, 0, 500),
             AlertAt = new DateTime(2026, 10, 20, 9, 0, 0), Status = OccurrenceStatus.Active
         };
-        var json = JsonSerializer.Serialize(SyncApi.ToWire(occurrence), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var json = JsonSerializer.Serialize(SyncApi.ToWire(occurrence), Web);
         check(json.Contains("\"scheduledFor\":\"2026-10-20T09:00:00\"") && json.Contains("\"status\":\"Pending\"") &&
               json.Contains("\"definitionId\":"), $"sync JSON uses camelCase names and wall-clock times ({json})");
+
+        // Written the way the iPhone app's encoder writes it: upper-case IDs and missing (not null) optional fields.
+        var request = JsonSerializer.Deserialize<SyncRequest>(SharedFile("sync-request-sample.json"), Web)!;
+        var snooze = request.Ops![0];
+        var upsert = request.Ops[1];
+        check(request.SinceRevision == 4 && snooze.Type == SyncOps.Snooze && SyncTime.TryParse(snooze.Until, out _) &&
+              snooze.OccurrenceId == AlarmEngine.OccurrenceId(snooze.DefinitionId!.Value, new DateTime(2026, 10, 20, 9, 0, 0)) &&
+              SyncApi.ToDefinition(upsert.Definition!, null, out var fromPhone) is null &&
+              fromPhone is { Devices: AlarmDevices.Phone, Important: true, Repeat.Weekdays: 62, EventEnd: null },
+            "the iPhone app's sync request is understood");
     }
 }
