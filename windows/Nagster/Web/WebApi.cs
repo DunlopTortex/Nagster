@@ -12,19 +12,21 @@ public sealed record AlarmItem(string Id, string Title, string Description, stri
 /// <see cref="SeriesWhen"/> the series' next one, where an edit to the whole series restarts.
 /// </summary>
 public sealed record AlarmDetails(string Title, string Description, string Kind, bool Recurring, string When, string SeriesWhen,
-    string Repeat, int Interval, int? DeadlineMinutes);
+    string Repeat, int Interval, int? DeadlineMinutes, string Devices);
 public sealed record SnoozeOption(string Value, string Label);
 public sealed record WebState(AlarmItem[] Ringing, AlarmItem[] Upcoming, SnoozeOption[] SnoozeChoices);
 public sealed record LoginRequest(string? Password);
 public sealed record SnoozeRequest(string? Duration);
 public sealed record RescheduleRequest(string? When);
 public sealed record ClipboardRequest(string? Text);
-public sealed record NewAlarmRequest(string? Title, string? Description, string? When, string? Repeat, int Interval = 1, int? DeadlineMinutes = null);
+/// <summary>A new alarm from the web form; <see cref="Devices"/> names an <see cref="AlarmDevices"/> value, blank for all.</summary>
+public sealed record NewAlarmRequest(string? Title, string? Description, string? When, string? Repeat, int Interval = 1, int? DeadlineMinutes = null,
+    string? Devices = null);
 /// <summary>An edit to an upcoming occurrence; <see cref="Scope"/> is "one" or "all" for a repeating alarm.</summary>
 public sealed record EditAlarmRequest(string? Scope, string? Title, string? Description, string? When, string? Repeat,
-    int Interval = 1, int? DeadlineMinutes = null)
+    int Interval = 1, int? DeadlineMinutes = null, string? Devices = null)
 {
-    public NewAlarmRequest Alarm => new(Title, Description, When, Repeat, Interval, DeadlineMinutes);
+    public NewAlarmRequest Alarm => new(Title, Description, When, Repeat, Interval, DeadlineMinutes, Devices);
 }
 public sealed record ScopeRequest(string? Scope);
 
@@ -80,6 +82,9 @@ public static class WebApi
         });
 
         web.MapGet("/api/state", () => Ui(() => State(alarms.Engine)));
+
+        // The iPhone app's sync: its actions in, everything changed since its last sync out (see SyncApi).
+        web.MapPost("/api/sync", (SyncRequest request) => Ui(() => SyncApi.Handle(alarms, request, DateTime.Now)));
 
         web.MapPost("/api/occurrences/{id:guid}/complete", (Guid id) =>
             Ui(() => Act(alarms, id, occurrence => { alarms.Complete(occurrence); return null; })));
@@ -177,7 +182,7 @@ public static class WebApi
             ? Math.Max(1, (int)Math.Ceiling((at - occurrence.ScheduledFor).TotalMinutes)) : null);
         return new AlarmDetails(definition.Title, definition.Description, definition.IsEvent ? "Event" : "Alarm", IsRecurring(definition),
             LocalValue(occurrence.ScheduledFor), LocalValue(next.ScheduledFor), definition.Repeat.Kind.ToString(),
-            definition.Repeat.Interval, deadline);
+            definition.Repeat.Interval, deadline, definition.Devices.ToString());
     }
 
     /// <summary>
@@ -200,6 +205,8 @@ public static class WebApi
         changes.Description = edited.Description;
         changes.DeadlineAfterMinutes = edited.DeadlineAfterMinutes;
         changes.AbsoluteDeadline = null;
+        // A page loaded before device choices existed doesn't send one; keep the alarm's.
+        if (request.Devices is not null) changes.Devices = edited.Devices;
         // An event keeps its length from the new start.
         if (changes.EventEnd is DateTime end) changes.EventEnd = edited.FirstDue + (end - definition.FirstDue);
         changes.FirstDue = edited.FirstDue;
@@ -265,11 +272,14 @@ public static class WebApi
         if (!Enum.TryParse<RepeatKind>(request.Repeat, ignoreCase: true, out var kind) || !Enum.IsDefined(kind)) return "Choose how often it repeats.";
         if (request.Interval is < 1 or > 999) return "Repeat interval must be between 1 and 999.";
         if (request.DeadlineMinutes is < 1 or > 10080) return "Deadline must be between 1 and 10080 minutes after each alert.";
+        var devices = AlarmDevices.All;
+        if (!string.IsNullOrEmpty(request.Devices) && (!Enum.TryParse(request.Devices, out devices) || !Enum.IsDefined(devices)))
+            return "Choose which devices it rings on.";
         definition = new AlarmDefinition
         {
             Title = title, Description = description, FirstDue = due,
             Repeat = new RepeatRule { Kind = kind, Interval = request.Interval },
-            DeadlineAfterMinutes = request.DeadlineMinutes
+            DeadlineAfterMinutes = request.DeadlineMinutes, Devices = devices
         };
         return null;
     }

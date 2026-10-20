@@ -99,6 +99,8 @@ try
 }
 finally { if (File.Exists(noticePath)) File.Delete(noticePath); }
 
+SyncChecks.Run(Check);
+
 // ---- Web editing ----
 var webPath = Path.Combine(Path.GetTempPath(), "Nagster-web-" + Guid.NewGuid() + ".db");
 try
@@ -485,7 +487,8 @@ var uiThread = new Thread(() =>
             Title = "Team stand-up", Description = "Daily sync", IsEvent = true, ReminderMinutes = 5,
             FirstDue = DateTime.Today.AddHours(9), EventEnd = DateTime.Today.AddHours(10.5),
             Repeat = new RepeatRule { Kind = RepeatKind.Weekly, Interval = 2, Weekdays = (1 << 1) | (1 << 3), Count = 12 },
-            DeadlineAfterMinutes = 30, Sound = "builtin:chime", ResponseSecondsOverride = 45, AutoSnoozeOverride = "2h"
+            DeadlineAfterMinutes = 30, Sound = "builtin:chime", ResponseSecondsOverride = 45, AutoSnoozeOverride = "2h",
+            Devices = AlarmDevices.Phone, Important = true
         };
         var nextRun = DateTime.Today.AddDays(2).AddHours(9);
         var form = new NewAlarmWindow(original, nextRun);
@@ -505,6 +508,8 @@ var uiThread = new Thread(() =>
         editSteps.Add(Find<System.Windows.Controls.ComboBox>("DeadlineMode").SelectedIndex == 2 && Find<System.Windows.Controls.TextBox>("DeadlineMinutes").Text == "30" &&
                       Find<Nagster.Controls.SoundPicker>("SoundChoice").Sound == "builtin:chime" &&
                       Find<System.Windows.Controls.TextBox>("ResponseOverride").Text == "45" && Find<System.Windows.Controls.TextBox>("AutoSnoozeOverride").Text == "2h");
+        editSteps.Add((string)((System.Windows.Controls.ComboBoxItem)Find<System.Windows.Controls.ComboBox>("DevicesBox").SelectedItem).Tag == "Phone" &&
+                      Find<System.Windows.Controls.CheckBox>("ImportantBox").IsChecked == true);
         System.Windows.Window[] dialogs = [new MainWindow(), new SettingsWindow(), new AlarmCenterWindow(), new QuickReminderWindow(), new NewAlarmWindow(),
             new RescheduleWindow(new AlarmOccurrence { AlertAt = DateTime.Now.AddHours(1) }), new CalendarsWindow()];
         placementSteps.Add(dialogs.All(w => w.WindowStartupLocation == System.Windows.WindowStartupLocation.CenterScreen));
@@ -545,6 +550,6 @@ uiThread.Join();
 if (File.Exists(uiPath)) File.Delete(uiPath);
 Check(uiError is null, "WPF alarm/editor windows construct");
 Check(durationSteps.Count == 6 && durationSteps.All(ok => ok), $"event duration links start and end ({string.Join(", ", durationSteps.Select((ok, i) => $"step {i + 1} {(ok ? "ok" : "FAILED")}"))})");
-Check(editSteps.Count == 6 && editSteps.All(ok => ok), $"edit window loads every field of an existing alarm ({string.Join(", ", editSteps.Select((ok, i) => $"step {i + 1} {(ok ? "ok" : "FAILED")}"))})");
+Check(editSteps.Count == 7 && editSteps.All(ok => ok), $"edit window loads every field of an existing alarm ({string.Join(", ", editSteps.Select((ok, i) => $"step {i + 1} {(ok ? "ok" : "FAILED")}"))})");
 Check(placementSteps.Count == 1 && placementSteps.All(ok => ok), "every window opens centred on the screen");
 Check(pauseWording.StartsWith("Your pause ended at ") && pauseWording.EndsWith("2 alarms are waiting to go off."), $"the pause-ended popup says when it ended and what is waiting ({pauseWording})");

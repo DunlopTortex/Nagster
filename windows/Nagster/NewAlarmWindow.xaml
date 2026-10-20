@@ -170,6 +170,27 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Devices -->
+                        <TextBlock Style="{StaticResource Text.Section}" Text="Devices" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="Ring on" Style="{StaticResource Text.Field}" />
+                                <ComboBox x:Name="DevicesBox" Width="220" HorizontalAlignment="Left" SelectedIndex="0">
+                                    <ComboBoxItem Content="All devices" Tag="All" />
+                                    <ComboBoxItem Content="This PC only" Tag="Desktop" />
+                                    <ComboBoxItem Content="iPhone only" Tag="Phone" />
+                                </ComboBox>
+                                <TextBlock Text="Every device lists the alarm; only these ones ring." Style="{StaticResource Text.Hint}" />
+                                <CheckBox x:Name="ImportantBox" Style="{StaticResource Toggle}" Margin="0,14,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Important on iPhone" />
+                                        <TextBlock Style="{StaticResource Text.Hint}"
+                                                   Text="Rings as a full-screen alarm, like the Clock app, instead of a notification." />
+                                    </StackPanel>
+                                </CheckBox>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Sound and response -->
                         <TextBlock Style="{StaticResource Text.Section}" Text="Sound and response" />
                         <Border Style="{StaticResource Card}">

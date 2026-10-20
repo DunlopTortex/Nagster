@@ -1,0 +1,362 @@
+{
+  "_comment": "Cases both apps must agree on. Expected values come from the Windows app; the Swift tests and the Windows checks both verify them.",
+  "recurrence": [
+    {
+      "name": "weekly selected weekdays",
+      "rule": {
+        "kind": "Weekly",
+        "interval": 1,
+        "weekdays": 34,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-10-12T09:00:00",
+      "after": "2026-10-12T09:00:00",
+      "expected": "2026-10-16T09:00:00"
+    },
+    {
+      "name": "weekdays skip the weekend",
+      "rule": {
+        "kind": "Weekly",
+        "interval": 1,
+        "weekdays": 62,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-10-19T08:30:00",
+      "after": "2026-10-23T18:00:00",
+      "expected": "2026-10-26T08:30:00"
+    },
+    {
+      "name": "fortnightly on the anchor's weekday",
+      "rule": {
+        "kind": "Weekly",
+        "interval": 2,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-10-21T18:00:00",
+      "after": "2026-10-22T00:00:00",
+      "expected": "2026-11-04T18:00:00"
+    },
+    {
+      "name": "last Friday of month",
+      "rule": {
+        "kind": "Monthly",
+        "interval": 1,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": -1,
+        "nthWeekday": 5,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-09-25T09:00:00",
+      "after": "2026-09-25T09:00:00",
+      "expected": "2026-10-30T09:00:00"
+    },
+    {
+      "name": "second Tuesday every 3 months",
+      "rule": {
+        "kind": "Monthly",
+        "interval": 3,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 2,
+        "nthWeekday": 2,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-01-13T10:00:00",
+      "after": "2026-01-13T10:00:00",
+      "expected": "2026-04-14T10:00:00"
+    },
+    {
+      "name": "31st falls back to end of February",
+      "rule": {
+        "kind": "Monthly",
+        "interval": 1,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-01-31T09:00:00",
+      "after": "2026-01-31T09:00:00",
+      "expected": "2026-02-28T09:00:00"
+    },
+    {
+      "name": "31st skips short months without fallback",
+      "rule": {
+        "kind": "Monthly",
+        "interval": 1,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": false,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-01-31T09:00:00",
+      "after": "2026-01-31T09:00:00",
+      "expected": "2026-03-31T09:00:00"
+    },
+    {
+      "name": "monthly on a chosen day",
+      "rule": {
+        "kind": "Monthly",
+        "interval": 1,
+        "weekdays": 0,
+        "dayOfMonth": 15,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-10-01T12:00:00",
+      "after": "2026-10-01T12:00:00",
+      "expected": "2026-10-15T12:00:00"
+    },
+    {
+      "name": "leap-day fallback",
+      "rule": {
+        "kind": "Yearly",
+        "interval": 1,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2028-02-29T09:00:00",
+      "after": "2028-02-29T09:00:00",
+      "expected": "2029-02-28T09:00:00"
+    },
+    {
+      "name": "leap day only in leap years",
+      "rule": {
+        "kind": "Yearly",
+        "interval": 1,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": false,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2028-02-29T09:00:00",
+      "after": "2028-02-29T09:00:00",
+      "expected": "2032-02-29T09:00:00"
+    },
+    {
+      "name": "every other year",
+      "rule": {
+        "kind": "Yearly",
+        "interval": 2,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-07-04T08:00:00",
+      "after": "2026-07-04T08:00:00",
+      "expected": "2028-07-04T08:00:00"
+    },
+    {
+      "name": "fourth Thursday of November",
+      "rule": {
+        "kind": "Yearly",
+        "interval": 1,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 4,
+        "nthWeekday": 4,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-11-26T15:00:00",
+      "after": "2026-11-26T15:00:00",
+      "expected": "2027-11-25T15:00:00"
+    },
+    {
+      "name": "every 20 minutes",
+      "rule": {
+        "kind": "Minutes",
+        "interval": 20,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-10-20T09:00:00",
+      "after": "2026-10-20T09:45:00",
+      "expected": "2026-10-20T10:00:00"
+    },
+    {
+      "name": "minutes before the anchor",
+      "rule": {
+        "kind": "Minutes",
+        "interval": 20,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-10-20T09:00:00",
+      "after": "2026-10-20T08:55:00",
+      "expected": "2026-10-20T09:20:00"
+    },
+    {
+      "name": "every 3 hours overnight",
+      "rule": {
+        "kind": "Hours",
+        "interval": 3,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-10-20T22:30:00",
+      "after": "2026-10-21T05:00:00",
+      "expected": "2026-10-21T07:30:00"
+    },
+    {
+      "name": "hours stop at the end date",
+      "rule": {
+        "kind": "Hours",
+        "interval": 1,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": "2026-10-20T12:00:00",
+        "count": null
+      },
+      "anchor": "2026-10-20T10:00:00",
+      "after": "2026-10-20T11:30:00",
+      "expected": "2026-10-20T12:00:00"
+    },
+    {
+      "name": "every other day",
+      "rule": {
+        "kind": "Daily",
+        "interval": 2,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-10-20T07:15:00",
+      "after": "2026-10-25T08:00:00",
+      "expected": "2026-10-26T07:15:00"
+    },
+    {
+      "name": "daily keeps wall-clock time over the clocks changing",
+      "rule": {
+        "kind": "Daily",
+        "interval": 1,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-03-28T01:30:00",
+      "after": "2026-03-28T01:30:00",
+      "expected": "2026-03-29T01:30:00"
+    },
+    {
+      "name": "daily stops at the end date",
+      "rule": {
+        "kind": "Daily",
+        "interval": 1,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": "2026-10-22T08:00:00",
+        "count": null
+      },
+      "anchor": "2026-10-20T09:00:00",
+      "after": "2026-10-21T10:00:00",
+      "expected": null
+    },
+    {
+      "name": "one-off never repeats",
+      "rule": {
+        "kind": "Once",
+        "interval": 1,
+        "weekdays": 0,
+        "dayOfMonth": 0,
+        "nth": 0,
+        "nthWeekday": 0,
+        "useLastDayForShortMonths": true,
+        "until": null,
+        "count": null
+      },
+      "anchor": "2026-10-20T09:00:00",
+      "after": "2026-10-20T09:00:00",
+      "expected": null
+    }
+  ],
+  "occurrenceIds": [
+    {
+      "definitionId": "6f1c2a8e-4b7d-4e0f-9a3c-2d5e8f1b7c40",
+      "scheduledFor": "2026-10-20T09:00:00",
+      "expected": "4d8f2c94-0d18-5097-ac64-76e3cfc0ea94"
+    },
+    {
+      "definitionId": "6f1c2a8e-4b7d-4e0f-9a3c-2d5e8f1b7c40",
+      "scheduledFor": "2026-10-21T09:00:00",
+      "expected": "c8a4765c-41e9-505e-b505-1e51bad41968"
+    },
+    {
+      "definitionId": "00000000-0000-0000-0000-000000000001",
+      "scheduledFor": "2027-01-01T00:00:00",
+      "expected": "a0b469a8-09ae-52fc-9278-61da9c41cec4"
+    }
+  ]
+}

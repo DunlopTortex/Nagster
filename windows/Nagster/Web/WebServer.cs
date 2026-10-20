@@ -18,6 +18,9 @@ public sealed class WebServer(App alarms, IPAddress? bindAddress = null, ITextCl
     /// <summary>Request size allowed for clipboard text; everything else keeps Kestrel's small default limit.</summary>
     public const long ClipboardBodyLimit = 4 * 1024 * 1024;
 
+    /// <summary>Request size allowed for a sync, enough for the actions of a phone that was away for weeks.</summary>
+    public const long SyncBodyLimit = 1024 * 1024;
+
     private readonly ITextClipboard _clipboard = clipboard ?? new SystemTextClipboard();
     // All interfaces by default so phones on the network can connect; tests bind to loopback instead.
     private readonly IPAddress _bindAddress = bindAddress ?? IPAddress.Any;
@@ -146,10 +149,11 @@ public sealed class WebServer(App alarms, IPAddress? bindAddress = null, ITextCl
         }
         // Using a device keeps it signed in: the session and the cookie's expiry are pushed back (at most daily).
         if (token is not null && path != "/api/logout" && _sessions.Touch(token)) SetSessionCookie(context, token);
-        // Only a signed-in request may send a large body, and only to set the clipboard.
-        if (path == "/api/clipboard" && HttpMethods.IsPost(context.Request.Method) &&
+        // Only a signed-in request may send a large body, and only to set the clipboard or sync.
+        var isSync = path == "/api/sync";
+        if (HttpMethods.IsPost(context.Request.Method) && (isSync || path == "/api/clipboard") &&
             context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } limit)
-            limit.MaxRequestBodySize = ClipboardBodyLimit;
+            limit.MaxRequestBodySize = isSync ? SyncBodyLimit : ClipboardBodyLimit;
         await next(context);
     }
 }

@@ -139,6 +139,9 @@
                                                     <DockPanel Margin="0,6">
                                                         <TextBlock x:Name="Glyph" Text="&#xEA8F;" Style="{StaticResource Text.Glyph}" FontSize="13"
                                                                    Foreground="{DynamicResource Brush.SubtleText}" Margin="0,0,10,0" ToolTip="{Binding Type}" />
+                                                        <TextBlock x:Name="PhoneOnly" DockPanel.Dock="Right" Text="&#xE8EA;" Style="{StaticResource Text.Glyph}"
+                                                                   FontSize="13" Foreground="{DynamicResource Brush.SubtleText}" Margin="8,0,0,0"
+                                                                   Visibility="Collapsed" ToolTip="Rings on the iPhone only" />
                                                         <StackPanel>
                                                             <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                                                             <TextBlock Text="{Binding LastAction}" Style="{StaticResource Cell.Subtle}" FontSize="11.5" />
@@ -147,6 +150,9 @@
                                                     <DataTemplate.Triggers>
                                                         <DataTrigger Binding="{Binding Type}" Value="Event">
                                                             <Setter TargetName="Glyph" Property="Text" Value="&#xE787;" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding PhoneOnly}" Value="True">
+                                                            <Setter TargetName="PhoneOnly" Property="Visibility" Value="Visible" />
                                                         </DataTrigger>
                                                     </DataTemplate.Triggers>
                                                 </DataTemplate>

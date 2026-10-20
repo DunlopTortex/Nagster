@@ -98,6 +98,7 @@ public sealed class AlarmRow
     public AlarmDefinition Definition { get; }
     public string Title => Definition.Title;
     public string Type => Definition.IsEvent ? "Event" : "Alarm";
+    public bool PhoneOnly => Definition.Devices == AlarmDevices.Phone;
     public string DueText => Compact(Occurrence.ScheduledFor);
     public string EndText => Definition.IsEvent && Definition.EventEnd is DateTime end
         ? EndOf(Occurrence.ScheduledFor, Occurrence.ScheduledFor.Add(end - Definition.FirstDue)) : "—";

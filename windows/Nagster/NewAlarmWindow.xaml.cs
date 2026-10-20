@@ -166,7 +166,9 @@ public partial class NewAlarmWindow : Window
             Title = TitleBox.Text, Description = DescriptionBox.Text,
             FirstDue = due, Repeat = repeat,
             IsEvent = TypeEvent.IsChecked == true,
-            Sound = SoundChoice.Sound.Length == 0 ? null : SoundChoice.Sound
+            Sound = SoundChoice.Sound.Length == 0 ? null : SoundChoice.Sound,
+            Devices = Enum.Parse<AlarmDevices>((string)((ComboBoxItem)DevicesBox.SelectedItem).Tag),
+            Important = ImportantBox.IsChecked == true
         };
         if (definition.IsEvent)
         {
@@ -243,6 +245,8 @@ public partial class NewAlarmWindow : Window
             DeadlineMinutes.Text = minutes.ToString(System.Globalization.CultureInfo.CurrentCulture);
         }
         SoundChoice.Sound = alarm.Sound ?? "";
+        DevicesBox.SelectedIndex = DevicesBox.Items.Cast<ComboBoxItem>().ToList().FindIndex(i => (string)i.Tag == alarm.Devices.ToString());
+        ImportantBox.IsChecked = alarm.Important;
         ResponseOverride.Text = alarm.ResponseSecondsOverride?.ToString(System.Globalization.CultureInfo.CurrentCulture) ?? "";
         AutoSnoozeOverride.Text = alarm.AutoSnoozeOverride ?? "";
         UpdateSections();
