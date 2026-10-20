@@ -51,12 +51,17 @@ extension Color {
 
     /// A colour that follows light and dark mode.
     init(light: UInt32, dark: UInt32) {
-        // UIKit may call this off the main actor, so it builds the UIColor directly.
-        self.init(uiColor: UIColor { traits in
+        self.init(uiColor: Self.dynamicColor(light: light, dark: dark))
+    }
+
+    /// UIKit may resolve dynamic colours off the main thread, so the provider is built in a nonisolated function:
+    /// a closure made in main-actor code would trap when called elsewhere.
+    nonisolated private static func dynamicColor(light: UInt32, dark: UInt32) -> UIColor {
+        UIColor { traits in
             let hex = traits.userInterfaceStyle == .dark ? dark : light
             return UIColor(red: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
                            blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
-        })
+        }
     }
 }
 
