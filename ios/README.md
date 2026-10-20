@@ -81,9 +81,10 @@ One-off setup:
    Sensitive Notifications**, and `com.dgutilities.nagster.widgets`. If either ID is taken, change
    the bundle IDs in `project.yml`.
 2. In App Store Connect, create an app with that bundle ID. It never needs releasing.
-3. Under **Users and Access → Integrations → App Store Connect API**, create a key with the **App
-   Manager** role. Note its Key ID and the Issuer ID, and download the `.p8` file (only possible
-   once).
+3. Under **Users and Access → Integrations → App Store Connect API**, create a key with the
+   **Admin** role. Admin is needed for Xcode to create the cloud-managed distribution certificate
+   it signs uploads with; App Manager can archive but not upload. Note its Key ID and the Issuer
+   ID, and download the `.p8` file (only possible once).
 4. Add these repository secrets in GitHub (**Settings → Secrets and variables → Actions**):
 
    | Secret                        | Value                                                     |
