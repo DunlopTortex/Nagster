@@ -62,7 +62,7 @@ final class ImportantAlarmScheduler {
     }
 
     private func configuration(for alert: PlannedAlert, definition: AlarmDefinition,
-                               snooze: SnoozeDuration) -> AlarmManager.AlarmConfiguration<NagsterAlarmMetadata> {
+                               snooze: SnoozeDuration) -> sending AlarmManager.AlarmConfiguration<NagsterAlarmMetadata> {
         let target = NotificationTarget(occurrence: alert.occurrence)
         let metadata = NagsterAlarmMetadata(occurrenceID: target.occurrenceID, definitionID: target.definitionID,
                                             scheduledFor: target.scheduledFor.iso, title: definition.title)
