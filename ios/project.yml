@@ -27,16 +27,36 @@ targets:
     platform: iOS
     sources:
       - path: Nagster
+      - path: Shared
     dependencies:
       - package: NagsterCore
+      - target: NagsterWidgets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dgutilities.nagster
         TARGETED_DEVICE_FAMILY: "1"
+        # Generated keys plus the ones in Info.plist that build settings can't express.
         GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Nagster/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Nagster
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        CODE_SIGN_ENTITLEMENTS: Nagster/Nagster.entitlements
+
+  NagsterWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: NagsterWidgets
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dgutilities.nagster.widgets
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: NagsterWidgets/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Nagster
+        SKIP_INSTALL: YES
 
   NagsterTests:
     type: bundle.unit-test

@@ -121,10 +121,18 @@ public struct AlarmState: Hashable, Sendable {
         switch op.type {
         case .upsertAlarm:
             guard let incoming = op.definition else { return }
-            if let existing = definitions[incoming.id], !Self.sameSchedule(existing, incoming) {
-                // As on the PC: occurrences that haven't gone off restart from the edited schedule.
-                occurrences = occurrences.filter { $0.value.definitionId != incoming.id || !$0.value.status.isWaiting }
+            if let existing = definitions[incoming.id], Self.sameSchedule(existing, incoming) {
+                // Only the wording or devices changed: upcoming occurrences (and any snooze) stay as they are.
+                var kept = existing
+                kept.title = incoming.title
+                kept.description = incoming.description
+                kept.devices = incoming.devices
+                kept.important = incoming.important
+                definitions[incoming.id] = kept
+                return
             }
+            // As on the PC: occurrences that haven't gone off restart from the edited schedule.
+            occurrences = occurrences.filter { $0.value.definitionId != incoming.id || !$0.value.status.isWaiting }
             var updated = incoming
             updated.revision = definitions[incoming.id]?.revision ?? 0
             definitions[incoming.id] = updated
@@ -168,9 +176,18 @@ public struct AlarmState: Hashable, Sendable {
         return occurrence.id == id ? occurrence : nil
     }
 
-    static func sameSchedule(_ a: AlarmDefinition, _ b: AlarmDefinition) -> Bool {
-        a.firstDue == b.firstDue && a.isEvent == b.isEvent && a.eventEnd == b.eventEnd && a.reminderMinutes == b.reminderMinutes &&
-            a.absoluteDeadline == b.absoluteDeadline && a.deadlineAfterMinutes == b.deadlineAfterMinutes && a.repeatRule == b.repeatRule
+    /// True when an edit leaves the times occurrences fall on unchanged, as the PC's `AlarmEngine.SameSchedule`
+    /// decides it: a repeating alarm edited from its next run (a time already in its series) counts as unchanged,
+    /// unless the series is counted.
+    static func sameSchedule(_ existing: AlarmDefinition, _ edited: AlarmDefinition) -> Bool {
+        let length = { (definition: AlarmDefinition) in definition.eventEnd.map { $0 - definition.firstDue } }
+        let sameRules = existing.isEvent == edited.isEvent && existing.reminderMinutes == edited.reminderMinutes &&
+            existing.absoluteDeadline == edited.absoluteDeadline && existing.deadlineAfterMinutes == edited.deadlineAfterMinutes &&
+            existing.repeatRule == edited.repeatRule && length(existing) == length(edited)
+        guard sameRules else { return false }
+        if existing.firstDue == edited.firstDue { return true }
+        return existing.repeatRule.count == nil && edited.firstDue > existing.firstDue &&
+            existing.repeatRule.next(anchor: existing.firstDue, after: edited.firstDue.adding(seconds: -1)) == edited.firstDue
     }
 
     // MARK: - Syncing

@@ -133,6 +133,16 @@ internal static class SyncChecks
         check(engine.NextPending(alarm.Id) is { Status: OccurrenceStatus.Snoozed } kept && kept.Id == first.Id && alarm.Title == "Put the bins out",
             "changing only an alarm's title keeps its snooze");
 
+        var fromNextRun = alarm.Copy();
+        fromNextRun.Title = "Bins (edited from the next run)";
+        fromNextRun.FirstDue = alarm.FirstDue.AddDays(7); // What the editor does for a repeating alarm.
+        engine.Update(alarm.Id, fromNextRun);
+        check(engine.NextPending(alarm.Id) is { Status: OccurrenceStatus.Snoozed } stillKept && stillKept.Id == first.Id &&
+              alarm.FirstDue == fromNextRun.FirstDue.AddDays(-7),
+            "editing a repeating alarm from its next run keeps its snooze");
+        edited.Title = "Put the bins out";
+        engine.Update(alarm.Id, edited);
+
         var delta = Sync(engine, baseline.Revision);
         check(!delta.Full && delta.Definitions.Single().Title == "Put the bins out" && delta.Occurrences.Single().Status == "Snoozed",
             "a later sync sends only what changed");

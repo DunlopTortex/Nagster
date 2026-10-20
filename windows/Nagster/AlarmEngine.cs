@@ -139,12 +139,22 @@ public sealed class AlarmEngine
         Persist();
     }
 
-    /// <summary>True when an edit leaves every setting that decides when occurrences fall unchanged.</summary>
-    private static bool SameSchedule(AlarmDefinition existing, AlarmDefinition changes) =>
-        existing.FirstDue == changes.FirstDue && existing.IsEvent == changes.IsEvent && existing.EventEnd == changes.EventEnd &&
-        existing.ReminderMinutes == changes.ReminderMinutes && existing.AbsoluteDeadline == changes.AbsoluteDeadline &&
-        existing.DeadlineAfterMinutes == changes.DeadlineAfterMinutes &&
-        System.Text.Json.JsonSerializer.Serialize(existing.Repeat) == System.Text.Json.JsonSerializer.Serialize(changes.Repeat);
+    /// <summary>
+    /// True when an edit leaves the times occurrences fall on unchanged. The editors start a repeating alarm from
+    /// its next occurrence, so a first alert that is one of the series' own times counts as unchanged (unless the
+    /// series is counted, where moving the start would change which occurrences are counted).
+    /// </summary>
+    private static bool SameSchedule(AlarmDefinition existing, AlarmDefinition changes)
+    {
+        var sameRules = existing.IsEvent == changes.IsEvent && existing.ReminderMinutes == changes.ReminderMinutes &&
+            existing.AbsoluteDeadline == changes.AbsoluteDeadline && existing.DeadlineAfterMinutes == changes.DeadlineAfterMinutes &&
+            System.Text.Json.JsonSerializer.Serialize(existing.Repeat) == System.Text.Json.JsonSerializer.Serialize(changes.Repeat) &&
+            existing.EventEnd - existing.FirstDue == changes.EventEnd - changes.FirstDue;
+        if (!sameRules) return false;
+        if (existing.FirstDue == changes.FirstDue) return true;
+        return existing.Repeat.Count is null && changes.FirstDue > existing.FirstDue &&
+               existing.Repeat.Next(existing.FirstDue, changes.FirstDue.AddTicks(-1)) == changes.FirstDue;
+    }
 
     private void UpdateDetails(AlarmDefinition existing, AlarmDefinition changes)
     {

@@ -76,6 +76,10 @@ struct AlarmStateTests {
         daily.title = "Stretch properly"
         _ = state.save(daily)
         #expect(state.occurrences[first.id]?.status == .snoozed)
+        var fromNextRun = daily
+        fromNextRun.firstDue = nine.adding(.day, 1)
+        _ = state.save(fromNextRun)
+        #expect(state.occurrences[first.id]?.status == .snoozed && state.definitions[daily.id]?.firstDue == nine)
         daily.firstDue = nine.adding(.hour, 1)
         _ = state.save(daily)
         #expect(state.occurrences[first.id] == nil)
