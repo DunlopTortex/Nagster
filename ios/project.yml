@@ -42,6 +42,8 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         CODE_SIGN_ENTITLEMENTS: Nagster/Nagster.entitlements
+        # Made by windows/tools/CreateIosIcon.ps1 from the same artwork as the desktop and web icons.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
   NagsterWidgets:
     type: app-extension
