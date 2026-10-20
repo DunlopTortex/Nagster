@@ -29,8 +29,11 @@ struct NagsterApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AgendaView()
-                .environment(model)
+            TabView {
+                Tab("Alarms", systemImage: "alarm") { AgendaView() }
+                Tab("Clipboard", systemImage: "doc.on.clipboard") { ClipboardView() }
+            }
+            .environment(model)
                 .task {
                     await model.prepareAlerts()
                     await model.syncNow()

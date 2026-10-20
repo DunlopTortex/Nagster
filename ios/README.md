@@ -14,8 +14,10 @@ device answers it on both.
   repeats at the PC's automatic snooze interval until answered.
 - **Important** alarms ring full screen through AlarmKit, like the Clock app, even in silent mode.
 - Pauses alerts on the phone for a while, independently of the PC.
+- Shares text with the PC's clipboard: send text to the PC, or copy what's on the PC's clipboard to
+  the iPhone.
 
-Calendar import, Pushover and the web interface stay on the PC; imported alarms reach the phone
+Calendar import and Pushover stay on the PC; imported alarms reach the phone
 through sync. See [syncing](../docs/sync.md) for setup, how nagging works on the phone, and how
 conflicts are settled.
 

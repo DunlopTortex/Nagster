@@ -43,6 +43,14 @@ struct AppModelTests {
         #expect(NotificationTarget(userInfo: target.userInfo) == target)
     }
 
+    /// The PC's /api/clipboard reply, as WebApi serialises ClipboardContent.
+    @Test func readsThePCsClipboardReply() throws {
+        let text = try JSONDecoder().decode(PCClipboard.self, from: Data(#"{"text":"Hello\r\nPC","hasOtherContent":false}"#.utf8))
+        #expect(text == PCClipboard(text: "Hello\r\nPC", hasOtherContent: false))
+        let image = try JSONDecoder().decode(PCClipboard.self, from: Data(#"{"text":null,"hasOtherContent":true}"#.utf8))
+        #expect(image.text == nil && image.hasOtherContent)
+    }
+
     @Test func pcAddressesAreReadAsTyped() {
         #expect(SyncClient.baseURL(from: "192.168.1.20")?.absoluteString == "http://192.168.1.20:5972")
         #expect(SyncClient.baseURL(from: " my-pc:6000 ")?.absoluteString == "http://my-pc:6000")

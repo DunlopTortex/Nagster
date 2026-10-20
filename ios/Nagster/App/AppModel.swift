@@ -211,6 +211,18 @@ final class AppModel {
 
     func notificationsAllowed() async -> Bool { await notifications.isAllowed() }
 
+    // MARK: - The PC's clipboard
+
+    func readPCClipboard() async throws -> PCClipboard {
+        guard let client else { throw SyncError.notSetUp }
+        return try await client.readClipboard()
+    }
+
+    func sendToPCClipboard(_ text: String) async throws {
+        guard let client else { throw SyncError.notSetUp }
+        try await client.writeClipboard(text)
+    }
+
     // MARK: - Syncing
 
     private var client: SyncClient? { SyncClient.baseURL(from: pcAddress).map { SyncClient(baseURL: $0) } }
