@@ -1,0 +1,14 @@
+global using Application = System.Windows.Application;
+global using MessageBox = System.Windows.MessageBox;
+global using TextBox = System.Windows.Controls.TextBox;
+global using ContextMenu = System.Windows.Controls.ContextMenu;
+global using MenuItem = System.Windows.Controls.MenuItem;
+global using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+global using Color = System.Windows.Media.Color;
+global using System.IO;
+global using UserControl = System.Windows.Controls.UserControl;
+global using ListBox = System.Windows.Controls.ListBox;
+global using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+global using Point = System.Windows.Point;
+global using Button = System.Windows.Controls.Button;
+global using TextBlock = System.Windows.Controls.TextBlock;

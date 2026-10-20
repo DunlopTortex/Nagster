@@ -1,0 +1,38 @@
+# .NET build output
+**/bin/
+**/obj/
+publish/
+dist/
+TestResults/
+*.binlog
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.rsuser
+
+# Secrets and signing material
+.env
+.env.*
+*.pfx
+*.p12
+*.snk
+*.mobileprovision
+
+# Logs
+*.log
+
+# iOS / Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate
+Pods/
+build/
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini

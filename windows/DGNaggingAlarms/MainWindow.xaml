@@ -1,0 +1,186 @@
+<Window x:Class="DGNaggingAlarms.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DG Nagging Alarms" Icon="Assets/Alarm.ico"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="CanResize"
+        Height="708" Width="1180" MinWidth="900" MinHeight="548"
+        WindowStartupLocation="CenterScreen" FontFamily="{StaticResource Font.Text}"
+        Foreground="{DynamicResource Brush.Text}" UseLayoutRounding="True">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="14" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <Style x:Key="Cell.Text" TargetType="TextBlock">
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+        <Style x:Key="Cell.Subtle" TargetType="TextBlock" BasedOn="{StaticResource Cell.Text}">
+            <Setter Property="Foreground" Value="{DynamicResource Brush.SubtleText}" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Border Style="{StaticResource DialogShadow}" />
+        <Border Style="{StaticResource DialogFrame}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Title bar -->
+                <Grid Background="Transparent" Margin="22,16,10,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="40" Height="40" CornerRadius="10" Background="{DynamicResource Brush.AccentSubtle}">
+                            <TextBlock Text="&#xEA8F;" Style="{StaticResource Text.Glyph}" FontSize="18"
+                                       Foreground="{DynamicResource Brush.Accent}" />
+                        </Border>
+                        <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="DG Nagging Alarms" Style="{StaticResource Text.Title}" />
+                            <TextBlock Text="Your schedule, with enough persistence to get things done."
+                                       Style="{StaticResource Text.Hint}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                        <Button Click="Quick_Click" ToolTip="Create a reminder in a couple of clicks">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE945;" Style="{StaticResource Text.Glyph}" Margin="0,0,8,0" />
+                                <TextBlock Text="Quick reminder" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource Button.Accent}" Margin="8,0,0,0" Click="New_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE710;" Style="{StaticResource Text.Glyph}" Margin="0,0,8,0" />
+                                <TextBlock Text="New alarm" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource Button.Icon}" Content="&#xE713;" Margin="8,0,0,0"
+                                ToolTip="Settings" Click="Settings_Click" />
+                        <Border Width="1" Height="20" Margin="8,0" Background="{DynamicResource Brush.Border}" />
+                        <Button Style="{StaticResource Button.Icon}" Content="&#xE921;" FontSize="11"
+                                ToolTip="Minimise" Click="Minimise_Click" />
+                        <Button Style="{StaticResource Button.Close}" Content="&#xE8BB;" Margin="2,0,0,0"
+                                ToolTip="Close to tray" Click="Close_Click" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Filters -->
+                <DockPanel Grid.Row="1" Margin="22,20,22,0">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <RadioButton Style="{StaticResource Segment}" GroupName="Filter" Content="All" IsChecked="True" Click="All_Click" />
+                        <RadioButton Style="{StaticResource Segment}" GroupName="Filter" Content="Pending" Click="Pending_Click" />
+                        <RadioButton Style="{StaticResource Segment}" GroupName="Filter" Content="Completed" Click="Completed_Click" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock Text="On date" Style="{StaticResource Text.Hint}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <DatePicker x:Name="FilterDate" SelectedDateChanged="FilterDate_Changed" Width="160" />
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Calendar and agenda -->
+                <Grid Grid.Row="2" Margin="22,14,22,22">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource Card}" Padding="6,8" Margin="0,0,14,0" VerticalAlignment="Top">
+                        <StackPanel>
+                            <Calendar x:Name="MonthCalendar" Style="{StaticResource Calendar.Inline}"
+                                      SelectedDatesChanged="MonthCalendar_Changed" PreviewMouseUp="MonthCalendar_PreviewMouseUp" />
+                            <TextBlock Text="Pick a day to filter the agenda. Choose All to clear it." Style="{StaticResource Text.Hint}"
+                                       Margin="12,4,12,8" MaxWidth="240" HorizontalAlignment="Left" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Style="{StaticResource Card}" Padding="8,14,8,10">
+                        <DockPanel>
+                            <DockPanel DockPanel.Dock="Bottom" Margin="8,10,4,0">
+                                <TextBlock x:Name="CountText" Style="{StaticResource Text.Hint}" VerticalAlignment="Center" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Click="OpenActive_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xEA8F;" Style="{StaticResource Text.Glyph}" Margin="0,0,8,0" />
+                                            <TextBlock Text="Active alarms" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Margin="8,0,0,0" Click="Delete_Click" ToolTip="Delete the selected alarm and all its occurrences">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE74D;" Style="{StaticResource Text.Glyph}" Margin="0,0,8,0" />
+                                            <TextBlock Text="Delete" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </DockPanel>
+                            <Grid>
+                                <DataGrid x:Name="AlarmGrid" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                          PreviewMouseRightButtonDown="AlarmGrid_PreviewMouseRightButtonDown"
+                                          MouseDoubleClick="AlarmGrid_MouseDoubleClick">
+                                    <DataGrid.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Edit…" Click="Edit_Click">
+                                                <MenuItem.Icon><TextBlock Text="&#xE70F;" /></MenuItem.Icon>
+                                            </MenuItem>
+                                            <MenuItem Header="Delete…" Click="Delete_Click">
+                                                <MenuItem.Icon><TextBlock Text="&#xE74D;" /></MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </DataGrid.ContextMenu>
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Title" Width="*" MinWidth="140" SortMemberPath="Title">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <DockPanel Margin="0,6">
+                                                        <TextBlock x:Name="Glyph" Text="&#xEA8F;" Style="{StaticResource Text.Glyph}" FontSize="13"
+                                                                   Foreground="{DynamicResource Brush.SubtleText}" Margin="0,0,10,0" ToolTip="{Binding Type}" />
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock Text="{Binding LastAction}" Style="{StaticResource Cell.Subtle}" FontSize="11.5" />
+                                                        </StackPanel>
+                                                    </DockPanel>
+                                                    <DataTemplate.Triggers>
+                                                        <DataTrigger Binding="{Binding Type}" Value="Event">
+                                                            <Setter TargetName="Glyph" Property="Text" Value="&#xE787;" />
+                                                        </DataTrigger>
+                                                    </DataTemplate.Triggers>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Due" Binding="{Binding DueText}" Width="128" SortMemberPath="Occurrence.ScheduledFor" ElementStyle="{StaticResource Cell.Text}" />
+                                        <DataGridTextColumn Header="Ends" Binding="{Binding EndText}" Width="84" ElementStyle="{StaticResource Cell.Subtle}" />
+                                        <DataGridTextColumn Header="Next alert" Binding="{Binding AlertText}" Width="128" SortMemberPath="Occurrence.AlertAt" ElementStyle="{StaticResource Cell.Text}" />
+                                        <DataGridTextColumn Header="Deadline" Binding="{Binding DeadlineText}" Width="128" ElementStyle="{StaticResource Cell.Subtle}" />
+                                        <DataGridTemplateColumn Header="Status" Width="100" SortMemberPath="Status">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Border Style="{StaticResource StatusPill}">
+                                                        <TextBlock Text="{Binding Status}" FontSize="12" />
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                            IsHitTestVisible="False" Visibility="Collapsed">
+                                    <TextBlock Text="&#xE787;" Style="{StaticResource Text.Glyph}" FontSize="32"
+                                               Foreground="{DynamicResource Brush.SubtleText}" />
+                                    <TextBlock Text="Nothing scheduled here" Margin="0,12,0,4" FontSize="14" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="Create a new alarm or pick a different filter." Style="{StaticResource Text.Hint}"
+                                               HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

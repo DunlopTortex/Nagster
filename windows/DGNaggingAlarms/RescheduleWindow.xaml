@@ -1,0 +1,37 @@
+<Window x:Class="DGNaggingAlarms.RescheduleWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:DGNaggingAlarms.Controls"
+        Title="Reschedule this occurrence"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize"
+        SizeToContent="Height" Width="440" ShowInTaskbar="False" Topmost="True"
+        WindowStartupLocation="CenterScreen" FontFamily="{StaticResource Font.Text}"
+        Foreground="{DynamicResource Brush.Text}" UseLayoutRounding="True">
+    <Grid>
+        <Border Style="{StaticResource DialogShadow}" />
+        <Border Style="{StaticResource DialogFrame}">
+            <StackPanel>
+                <Grid Background="Transparent" Margin="22,14,10,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <TextBlock Style="{StaticResource Text.Title}" Text="Reschedule" VerticalAlignment="Center" />
+                    <Button Style="{StaticResource Button.Close}" Content="&#xE8BB;" HorizontalAlignment="Right"
+                            IsCancel="True" ToolTip="Cancel" />
+                </Grid>
+                <StackPanel Margin="22,6,22,20">
+                    <TextBlock Text="Moves this occurrence only. The recurring series stays unchanged." Style="{StaticResource Text.Hint}" />
+                    <TextBlock Text="New date and time" Style="{StaticResource Text.Field}" Margin="0,16,0,6" />
+                    <StackPanel Orientation="Horizontal">
+                        <DatePicker x:Name="NewDate" Width="170" />
+                        <controls:TimePicker x:Name="NewTime" Width="130" Margin="8,0,0,0" />
+                    </StackPanel>
+                </StackPanel>
+                <Border Style="{StaticResource DialogFooter}">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel" MinWidth="96" Click="Cancel_Click" />
+                        <Button Content="Reschedule" Style="{StaticResource Button.Accent}" MinWidth="110" Margin="8,0,0,0"
+                                IsDefault="True" Click="Save_Click" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

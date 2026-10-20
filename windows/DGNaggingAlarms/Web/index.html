@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#1c1d22">
+<!-- Home screen: icon, short name, and opening full screen without Safari's address bar. -->
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/favicon.png">
+<meta name="apple-mobile-web-app-title" content="Alarms">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>DG Nagging Alarms</title>
+<style nonce="{{nonce}}">
+  :root {
+    --bg: #1c1d22; --panel: #202127; --card: #26272e; --border: rgba(255,255,255,.12);
+    --text: #f2f2f5; --subtle: #a0a3ad; --accent: #7c6cf2; --accent-soft: rgba(124,108,242,.28);
+    --danger: #e5484d; --warning: #f4be77; --success: #4ade80;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; }
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  header .logo { width: 40px; height: 40px; border-radius: 10px; flex: none; }
+  header .heading { flex: 1; min-width: 0; }
+  header h1 { font-size: 20px; margin: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header p { margin: 0; color: var(--subtle); font-size: 13px; }
+  @media (max-width: 380px) { header .logo { display: none; } }
+  h2 { font-size: 14px; font-weight: 600; margin: 26px 0 10px; display: flex; align-items: center; gap: 8px; }
+  h2 .count { background: var(--card); color: var(--subtle); border-radius: 10px; padding: 0 8px; font-size: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+  .card.ringing { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-soft) inset; }
+  .card h3 { margin: 0 0 2px; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+  .meta { color: var(--subtle); font-size: 13px; }
+  .deadline { color: var(--warning); font-size: 13px; }
+  .desc { color: var(--subtle); font-size: 13px; margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .pill { display: inline-block; border-radius: 10px; padding: 1px 9px; font-size: 12px; margin-right: 6px; background: var(--card); color: var(--subtle); }
+  .pill.alarm { background: var(--accent-soft); color: #c9c2ff; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+  button, select, input, textarea {
+    font: inherit; color: var(--text); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
+    border-radius: 6px; padding: 7px 12px; min-height: 36px;
+  }
+  /* iOS zooms into any field under 16px when it gets focus, and often stays zoomed afterwards. */
+  select, input, textarea { font-size: 16px; }
+  button { cursor: pointer; }
+  button:hover { background: rgba(255,255,255,.14); }
+  button.primary { background: var(--accent); border-color: transparent; color: #fff; font-weight: 600; }
+  button.primary:hover { filter: brightness(1.1); }
+  button.danger { background: var(--danger); border-color: transparent; color: #fff; font-weight: 600; }
+  button.danger:hover { filter: brightness(1.1); }
+  button.link { background: none; border: none; color: var(--accent); padding: 4px 6px; }
+  button:disabled { opacity: .45; cursor: default; }
+  button.icon { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  button.icon svg { width: 18px; height: 18px; flex: none; }
+  button.add { min-height: 40px; padding: 8px 14px 8px 10px; flex: none; }
+  input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .reschedule { display: none; gap: 8px; width: 100%; flex-wrap: wrap; }
+  .reschedule.open { display: flex; }
+  .empty { color: var(--subtle); text-align: center; padding: 18px; }
+  .day { color: var(--subtle); font-size: 12px; font-weight: 600; margin: 14px 2px 6px; text-transform: uppercase; letter-spacing: .04em; }
+  .row { display: flex; gap: 12px; align-items: center; padding-right: 8px; }
+  .row .when { min-width: 72px; color: var(--subtle); font-size: 13px; }
+  .row .summary { flex: 1; min-width: 0; }
+  .row .tools { display: flex; gap: 2px; flex: none; }
+  .row .tools button { width: 40px; height: 40px; padding: 0; background: none; border: none; color: var(--subtle); border-radius: 8px; }
+  .row .tools button:hover { background: rgba(255,255,255,.08); color: var(--text); }
+  .row .tools svg { width: 20px; height: 20px; vertical-align: middle; }
+  form .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  form label { display: block; font-size: 12px; color: var(--subtle); margin-bottom: 5px; }
+  form input, form select, form textarea { width: 100%; }
+  form textarea { min-height: 64px; resize: vertical; }
+  form .full { grid-column: 1 / -1; }
+  @media (max-width: 520px) { form .grid { grid-template-columns: 1fr; } }
+  #login { max-width: 360px; margin: 12vh auto 0; }
+  #login input { width: 100%; margin: 10px 0 12px; }
+  #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border);
+           border-radius: 8px; padding: 10px 16px; max-width: calc(100% - 32px); display: none; z-index: 1; }
+  #toast.error { border-color: var(--danger); }
+  #toast.show { display: block; }
+
+  /* Dialogs are bottom sheets on phones and centred panels on wider screens. */
+  /* Positioned explicitly rather than with the browser's dialog defaults, which Safari lays out differently.
+     --keyboard and --visible-height track the iOS keyboard (see fitDialogsToKeyboard). */
+  dialog {
+    position: fixed; left: 0; right: 0; top: auto; bottom: var(--keyboard, 0px); margin: 0;
+    width: auto; max-width: none; height: auto; overflow: hidden;
+    max-height: 92vh; max-height: calc(var(--visible-height, 100vh) - 24px);
+    background: var(--panel); color: var(--text); border: 1px solid var(--border); padding: 0; border-radius: 16px 16px 0 0;
+  }
+  dialog::backdrop { background: rgba(0,0,0,.6); }
+  dialog form { display: flex; flex-direction: column; max-height: inherit; }
+  /* Grid cells otherwise refuse to shrink below their content, and Safari's date field is wide. */
+  dialog .sheet-body > * { min-width: 0; }
+  dialog input[type="datetime-local"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; text-align: left; }
+  dialog input::-webkit-date-and-time-value { text-align: left; }
+  dialog .sheet-head { padding: 18px 20px 4px; }
+  dialog .sheet-head h3 { margin: 0; font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
+  dialog .sheet-head p { margin: 4px 0 0; }
+  dialog .error { color: var(--danger); font-size: 13px; margin: 0; padding: 0 20px 10px; }
+  dialog .sheet-body { padding: 14px 20px; overflow-y: auto; }
+  dialog .sheet-foot { display: flex; gap: 10px; padding: 12px 20px max(16px, env(safe-area-inset-bottom)); border-top: 1px solid var(--border); }
+  dialog .sheet-foot button { flex: 1; min-height: 44px; }
+  #choice .sheet-foot { flex-direction: column-reverse; border-top: none; }
+  dialog input, dialog select, dialog textarea { min-height: 42px; }
+  @media (min-width: 600px) {
+    dialog { top: 0; bottom: 0; width: calc(100% - 32px); max-width: 520px; height: fit-content; margin: auto; border-radius: 14px; }
+    #choice { max-width: 400px; }
+  }
+  /* Alarms | Clipboard tabs */
+  .tabs { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin: -6px 0 6px; }
+  .tabs button { flex: 1; background: none; border: none; color: var(--subtle); border-radius: 7px; min-height: 38px; font-weight: 600; }
+  .tabs button[aria-selected="true"] { background: var(--accent-soft); color: var(--text); }
+  .clip { width: 100%; min-height: 150px; resize: vertical; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .clip[readonly] { background: rgba(255,255,255,.04); }
+  .clip-note { margin: 8px 2px 0; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <section id="login" class="card" hidden>
+    <h3>DG Nagging Alarms</h3>
+    <p class="meta">Enter the web access password set in the app's Settings.</p>
+    <form id="login-form">
+      <input id="password" type="password" autocomplete="current-password" required aria-label="Password">
+      <button class="primary" type="submit">Sign in</button>
+    </form>
+  </section>
+
+  <div id="app" hidden>
+    <header>
+      <img class="logo" src="/apple-touch-icon.png" alt="">
+      <div class="heading"><h1>DG Nagging Alarms</h1><p id="updated">Loading…</p></div>
+      <button class="primary icon add" id="add" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New</button>
+      <button class="link" id="logout" type="button">Sign out</button>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button type="button" role="tab" id="tab-alarms" aria-controls="alarms-view" aria-selected="true">Alarms</button>
+      <button type="button" role="tab" id="tab-clipboard" aria-controls="clipboard-view" aria-selected="false">Clipboard</button>
+    </nav>
+
+    <div id="alarms-view" role="tabpanel" aria-labelledby="tab-alarms">
+      <h2>Going off now <span class="count" id="ringing-count">0</span></h2>
+      <div id="ringing"></div>
+
+      <h2>Next 7 days <span class="count" id="upcoming-count">0</span></h2>
+      <div id="upcoming"></div>
+    </div>
+
+    <div id="clipboard-view" role="tabpanel" aria-labelledby="tab-clipboard" hidden>
+      <h2>Send to the PC</h2>
+      <div class="card">
+        <textarea class="clip" id="clip-send" aria-label="Text to send to the PC clipboard"
+                  placeholder="Paste or type text here, then send it to the PC's clipboard."></textarea>
+        <div class="actions">
+          <button class="primary" type="button" id="clip-send-button">Send to PC</button>
+          <button type="button" id="clip-paste" hidden>Paste</button>
+          <button class="link" type="button" id="clip-clear">Clear</button>
+        </div>
+      </div>
+
+      <h2>On the PC clipboard</h2>
+      <div class="card">
+        <textarea class="clip" id="clip-current" readonly aria-label="Text on the PC clipboard"></textarea>
+        <p class="meta clip-note" id="clip-note"></p>
+        <div class="actions">
+          <button class="primary" type="button" id="clip-copy">Copy</button>
+          <button type="button" id="clip-refresh">Refresh</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<dialog id="editor" aria-labelledby="editor-title">
+  <form id="editor-form">
+    <div class="sheet-head"><h3 id="editor-title">New alarm</h3><p class="meta" id="editor-hint" hidden></p></div>
+    <div class="sheet-body grid">
+      <div class="full"><label for="title">Title</label><input id="title" maxlength="160" required placeholder="What needs doing?"></div>
+      <div><label for="when" id="when-label">First alert</label><input id="when" type="datetime-local" required></div>
+      <div><label for="deadline">Must complete within (minutes, optional)</label><input id="deadline" type="number" inputmode="numeric" min="1" max="10080" placeholder="No deadline"></div>
+      <div class="repeat-field"><label for="repeat">Repeat</label>
+        <select id="repeat">
+          <option value="Once">Once</option><option value="Daily">Daily</option><option value="Weekly">Weekly</option>
+          <option value="Monthly">Monthly</option><option value="Yearly">Yearly</option>
+          <option value="Hours">Every few hours</option><option value="Minutes">Every few minutes</option>
+        </select></div>
+      <div class="repeat-field" id="interval-field"><label for="interval" id="interval-label">Every</label><input id="interval" type="number" inputmode="numeric" min="1" max="999" value="1"></div>
+      <div class="full"><label for="description">Description (optional)</label><textarea id="description" maxlength="1000"></textarea></div>
+    </div>
+    <p class="error" id="editor-error" role="alert" hidden></p>
+    <div class="sheet-foot">
+      <button type="button" id="editor-cancel">Cancel</button>
+      <button class="primary" type="submit" id="editor-save">Create alarm</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="choice" aria-labelledby="choice-title">
+  <form method="dialog">
+    <div class="sheet-head"><h3 id="choice-title"></h3><p class="meta" id="choice-message"></p></div>
+    <div class="sheet-foot" id="choice-buttons"></div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script nonce="{{nonce}}">
+"use strict";
+const $ = id => document.getElementById(id);
+let snoozeChoices = [];
+let refreshTimer = null;
+// The occurrence being edited ({ id, scope }), or null while creating a new alarm.
+let editing = null;
+
+// Fixed markup only: these never contain anything from an alarm.
+const ICONS = {
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg>',
+  dismiss: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+};
+
+// Builds an element; text always goes in via textContent so alarm titles can never inject markup.
+function el(tag, props = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(props)) {
+    if (key === "class") node.className = value;
+    else if (key === "text") node.textContent = value;
+    else if (key === "icon") node.innerHTML = ICONS[value];
+    else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+    else node.setAttribute(key, value);
+  }
+  for (const child of children.flat()) if (child) node.append(child);
+  return node;
+}
+
+async function api(path, body) {
+  const options = body === undefined ? {} : {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-DGNA": "1" },
+    body: JSON.stringify(body)
+  };
+  const response = await fetch(path, options);
+  if (response.status === 401 && path !== "/api/login") { showLogin(); throw new Error("Please sign in again."); }
+  if (!response.ok) {
+    const problem = await response.json().catch(() => ({}));
+    throw new Error(problem.error || `Something went wrong (HTTP ${response.status}).`);
+  }
+  return response.status === 204 ? null : response.json();
+}
+
+function toast(message, isError = false) {
+  const box = $("toast");
+  box.textContent = message;
+  box.className = "show" + (isError ? " error" : "");
+  clearTimeout(box.hideTimer);
+  box.hideTimer = setTimeout(() => box.className = "", 4000);
+}
+
+function showLogin() {
+  clearInterval(refreshTimer);
+  for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
+  $("app").hidden = true;
+  $("login").hidden = false;
+  $("password").focus();
+}
+
+function showApp() {
+  $("toast").className = "";
+  $("login").hidden = true;
+  $("app").hidden = false;
+  showTab(location.hash === "#clipboard" ? "clipboard" : "alarms");
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(() => { if (!document.hidden) refreshVisibleTab(); }, 5000);
+}
+
+let currentTab = "alarms";
+function refreshVisibleTab() { return currentTab === "clipboard" ? loadClipboard() : refresh(); }
+
+/** Switches between the Alarms and Clipboard tabs; the address remembers which, so it can be bookmarked. */
+function showTab(name) {
+  currentTab = name;
+  for (const tab of ["alarms", "clipboard"]) {
+    $(`tab-${tab}`).setAttribute("aria-selected", String(tab === name));
+    $(`${tab}-view`).hidden = tab !== name;
+  }
+  $("add").hidden = name !== "alarms";
+  history.replaceState(null, "", name === "clipboard" ? "#clipboard" : location.pathname);
+  refreshVisibleTab();
+}
+
+// ---- Clipboard ----
+let clipboardLoading = false;
+async function loadClipboard() {
+  // Leave the text alone while it's being selected or copied, so it doesn't change under the user.
+  if (clipboardLoading || document.activeElement === $("clip-current")) return;
+  clipboardLoading = true;
+  try {
+    const clipboard = await api("/api/clipboard");
+    const hasText = typeof clipboard.text === "string";
+    const text = hasText ? clipboard.text : "";
+    if ($("clip-current").value !== text) $("clip-current").value = text;
+    $("clip-copy").disabled = text.length === 0;
+    $("clip-note").textContent = hasText
+      ? `${text.length.toLocaleString()} character${text.length === 1 ? "" : "s"}`
+      : clipboard.hasOtherContent ? "The PC clipboard holds something other than text, such as an image or files."
+      : "The PC clipboard is empty.";
+    $("updated").textContent = "Clipboard checked " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
+  } catch (error) {
+    $("clip-note").textContent = error.message;
+  } finally { clipboardLoading = false; }
+}
+
+/**
+ * Copies a text box's contents on this device. Browsers only offer the clipboard API on secure (HTTPS) pages, and
+ * this page is plain HTTP on the local network, so otherwise the text is selected and copied the older way, which
+ * iOS also accepts as long as the box is briefly editable.
+ */
+async function copyOnThisDevice(area) {
+  if (window.isSecureContext && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(area.value);
+    return true;
+  }
+  const wasReadOnly = area.readOnly;
+  area.readOnly = false;
+  area.contentEditable = "true";
+  const range = document.createRange();
+  range.selectNodeContents(area);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  area.setSelectionRange(0, area.value.length);
+  const copied = document.execCommand("copy");
+  area.contentEditable = "false";
+  area.readOnly = wasReadOnly;
+  selection.removeAllRanges();
+  area.blur();
+  return copied;
+}
+
+async function act(item, action, body = {}) {
+  try {
+    await api(`/api/occurrences/${item.id}/${action}`, body);
+    toast({ complete: "Completed", dismiss: "Dismissed", snooze: "Snoozed", reschedule: "Rescheduled" }[action] + `: ${item.title}`);
+  } catch (error) { toast(error.message, true); }
+  refresh();
+}
+
+function localValue(date) {
+  const pad = n => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/**
+ * The iOS keyboard shrinks the visible area without moving fixed elements, which would leave the bottom of a
+ * sheet (and its Save button) behind the keyboard. This lifts sheets above it and limits them to what is visible.
+ */
+function fitDialogsToKeyboard() {
+  const viewport = window.visualViewport;
+  if (!viewport) return;
+  const fit = () => {
+    const hidden = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+    document.documentElement.style.setProperty("--keyboard", `${hidden}px`);
+    document.documentElement.style.setProperty("--visible-height", `${viewport.height}px`);
+  };
+  viewport.addEventListener("resize", fit);
+  viewport.addEventListener("scroll", fit);
+  fit();
+}
+
+// Closes a dialog when the dimmed area around it is tapped (the form fills the dialog, so only the backdrop hits it).
+function closeOnBackdrop(dialog) {
+  dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
+}
+
+/**
+ * Asks a question in a sheet. Each choice is { value, label, class }; resolves to the chosen value,
+ * or null if the sheet is cancelled.
+ */
+function choose(title, message, choices) {
+  const dialog = $("choice");
+  $("choice-title").textContent = title;
+  $("choice-message").textContent = message;
+  $("choice-buttons").replaceChildren(
+    el("button", { value: "", text: "Cancel" }),
+    ...choices.map(choice => el("button", { value: choice.value, class: choice.class || "", text: choice.label })));
+  dialog.returnValue = "";
+  return new Promise(resolve => {
+    dialog.addEventListener("close", () => resolve(dialog.returnValue || null), { once: true });
+    dialog.showModal();
+  });
+}
+
+function askScope(item, action) {
+  return action === "edit"
+    ? choose("Edit repeating alarm", `Change just this one, or every "${item.title}" from now on?`, [
+        { value: "all", label: "All in the series" },
+        { value: "one", label: "Just this one", class: "primary" }])
+    : choose("Dismiss repeating alarm", `Dismiss just this one, or delete "${item.title}" altogether, including its history?`, [
+        { value: "all", label: "Delete the whole series", class: "danger" },
+        { value: "one", label: "Just this one", class: "primary" }]);
+}
+
+function syncRepeatFields() {
+  const repeat = $("repeat").value;
+  // Stays hidden with the rest of the repeat fields when editing a single occurrence.
+  $("interval-field").hidden = $("repeat").closest(".repeat-field").hidden || repeat === "Once";
+  $("interval-label").textContent = "Every (" + ({ Minutes: "minutes", Hours: "hours", Daily: "days", Weekly: "weeks",
+    Monthly: "months", Yearly: "years" }[repeat] || "times") + ")";
+}
+
+/** Opens the editor empty for a new alarm, or filled from an occurrence's details when editing. */
+function openEditor(item = null, scope = null, details = null) {
+  const form = $("editor-form");
+  form.reset();
+  $("editor-error").hidden = true;
+  editing = item && { id: item.id, scope };
+  const single = details?.recurring && scope === "one";
+  const series = details?.recurring && scope === "all";
+  $("editor-title").textContent = !details ? "New alarm" : single ? "Edit this one" : series ? "Edit the series" : "Edit alarm";
+  const hint = single ? "Only this occurrence changes. It becomes a separate one-off alarm."
+    : series ? "Every upcoming occurrence changes, restarting from the next alert." : "";
+  $("editor-hint").textContent = hint;
+  $("editor-hint").hidden = !hint;
+  $("when-label").textContent = !details ? "First alert"
+    : details.kind === "Event" ? "Event starts" : series ? "Next alert" : "Alert at";
+  for (const field of form.querySelectorAll(".repeat-field")) field.hidden = single;
+  $("editor-save").textContent = details ? "Save changes" : "Create alarm";
+  if (details) {
+    $("title").value = details.title;
+    $("description").value = details.description;
+    $("when").value = series ? details.seriesWhen : details.when;
+    $("repeat").value = details.repeat;
+    $("interval").value = details.interval;
+    $("deadline").value = details.deadlineMinutes ?? "";
+  } else {
+    $("when").value = localValue(new Date(Date.now() + 3600000));
+  }
+  syncRepeatFields();
+  $("editor").showModal();
+  // Focusing the title would pop the keyboard up over the sheet on phones; leave that to the user.
+  if (matchMedia("(pointer: fine)").matches) $("title").focus();
+}
+
+async function editItem(item) {
+  const scope = item.recurring ? await askScope(item, "edit") : "all";
+  if (!scope) return;
+  try {
+    openEditor(item, scope, await api(`/api/occurrences/${item.id}`));
+  } catch (error) { toast(error.message, true); refresh(); }
+}
+
+async function cancelItem(item) {
+  const scope = item.recurring ? await askScope(item, "dismiss")
+    : await choose("Dismiss alarm", `Dismiss "${item.title}"? It won't go off.`, [{ value: "one", label: "Dismiss", class: "danger" }]);
+  if (!scope) return;
+  try {
+    await api(`/api/occurrences/${item.id}/cancel`, { scope });
+    toast((scope === "all" ? "Deleted: " : "Dismissed: ") + item.title);
+  } catch (error) { toast(error.message, true); }
+  refresh();
+}
+
+function ringingCard(item) {
+  const snooze = el("select", { "aria-label": "Snooze for" },
+    snoozeChoices.map(choice => el("option", { value: choice.value, text: choice.label })));
+  const when = el("input", { type: "datetime-local", value: localValue(new Date(Date.now() + 3600000)), "aria-label": "New time" });
+  const reschedule = el("div", { class: "reschedule" }, when,
+    el("button", { type: "button", text: "Move to this time", onclick: () => act(item, "reschedule", { when: when.value }) }));
+  return el("div", { class: "card ringing" },
+    el("div", {}, el("span", { class: "pill alarm", text: item.kind }), el("span", { class: "pill", text: item.status })),
+    el("h3", { text: item.title }),
+    el("div", { class: "meta", text: `Due ${item.due}` }),
+    item.deadline && el("div", { class: "deadline", text: `Complete by ${item.deadline}` }),
+    item.description && el("div", { class: "desc", text: item.description }),
+    el("div", { class: "actions" },
+      el("button", { class: "primary", type: "button", text: "Complete", onclick: () => act(item, "complete") }),
+      snooze,
+      el("button", { type: "button", text: "Snooze", onclick: () => act(item, "snooze", { duration: snooze.value }) }),
+      el("button", { type: "button", text: "Reschedule…", onclick: () => reschedule.classList.toggle("open") }),
+      el("button", { type: "button", text: "Dismiss", onclick: () => act(item, "dismiss") }),
+      reschedule));
+}
+
+function upcomingList(items) {
+  const groups = new Map();
+  for (const item of items) {
+    if (!groups.has(item.alertDay)) groups.set(item.alertDay, []);
+    groups.get(item.alertDay).push(item);
+  }
+  return [...groups].map(([day, dayItems]) => [
+    el("div", { class: "day", text: day }),
+    dayItems.map(item => {
+      const meta = [item.kind === "Event" ? `Event starts ${item.due}` : (item.lastAction || "Scheduled"), item.recurring && "Repeats"];
+      return el("div", { class: "card row" },
+        el("div", { class: "when", text: item.alertTime }),
+        el("div", { class: "summary" }, el("h3", { text: item.title }),
+          el("div", { class: "meta", text: meta.filter(Boolean).join(" · ") })),
+        el("div", { class: "tools" },
+          el("button", { type: "button", icon: "edit", title: "Edit", "aria-label": `Edit ${item.title}`, onclick: () => editItem(item) }),
+          el("button", { type: "button", icon: "dismiss", title: "Dismiss", "aria-label": `Dismiss ${item.title}`, onclick: () => cancelItem(item) })));
+    })
+  ]);
+}
+
+let refreshing = false;
+async function refresh() {
+  // Don't rebuild while someone is choosing a snooze length or new time, or the control would vanish under them.
+  if (refreshing || document.activeElement?.closest("#ringing select") || document.querySelector(".reschedule.open")) return;
+  refreshing = true;
+  try {
+    const state = await api("/api/state");
+    snoozeChoices = state.snoozeChoices;
+    $("ringing-count").textContent = state.ringing.length;
+    $("upcoming-count").textContent = state.upcoming.length;
+    $("ringing").replaceChildren(...(state.ringing.length
+      ? state.ringing.map(ringingCard) : [el("div", { class: "card empty", text: "Nothing is going off right now." })]));
+    $("upcoming").replaceChildren(...(state.upcoming.length
+      ? upcomingList(state.upcoming).flat(2) : [el("div", { class: "card empty", text: "Nothing scheduled in the next week." })]));
+    $("updated").textContent = "Updated " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
+  } catch (error) {
+    $("updated").textContent = error.message;
+  } finally { refreshing = false; }
+}
+
+$("login-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  try {
+    await api("/api/login", { password: $("password").value });
+    $("password").value = "";
+    showApp();
+  } catch (error) { toast(error.message, true); }
+});
+
+$("logout").addEventListener("click", async () => {
+  await api("/api/logout", {}).catch(() => {});
+  showLogin();
+});
+
+$("add").addEventListener("click", () => openEditor());
+$("tab-alarms").addEventListener("click", () => showTab("alarms"));
+$("tab-clipboard").addEventListener("click", () => showTab("clipboard"));
+
+$("clip-send-button").addEventListener("click", async () => {
+  const text = $("clip-send").value;
+  if (text.length === 0) { toast("Paste or type some text first.", true); return; }
+  $("clip-send-button").disabled = true;
+  try {
+    await api("/api/clipboard", { text });
+    toast("Sent to the PC clipboard");
+    loadClipboard();
+  } catch (error) { toast(error.message, true); }
+  finally { $("clip-send-button").disabled = false; }
+});
+
+const copyFailed = "Couldn't copy automatically. Select the text and copy it.";
+$("clip-copy").addEventListener("click", async () => {
+  try {
+    const copied = await copyOnThisDevice($("clip-current"));
+    toast(copied ? "Copied" : copyFailed, !copied);
+  } catch { toast(copyFailed, true); }
+});
+
+$("clip-refresh").addEventListener("click", () => { $("clip-current").blur(); loadClipboard(); });
+$("clip-clear").addEventListener("click", () => { $("clip-send").value = ""; $("clip-send").focus(); });
+
+// Reading this device's clipboard needs a secure (HTTPS) page; on plain HTTP people long-press the box and paste.
+if (window.isSecureContext && navigator.clipboard?.readText) {
+  $("clip-paste").hidden = false;
+  $("clip-paste").addEventListener("click", async () => {
+    try { $("clip-send").value = await navigator.clipboard.readText(); }
+    catch { toast("This browser didn't allow pasting. Long-press the box and choose Paste.", true); }
+  });
+}
+$("editor-cancel").addEventListener("click", () => $("editor").close());
+$("repeat").addEventListener("change", syncRepeatFields);
+closeOnBackdrop($("editor"));
+closeOnBackdrop($("choice"));
+fitDialogsToKeyboard();
+
+$("editor-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const deadline = $("deadline").value;
+  const alarm = {
+    title: $("title").value, description: $("description").value, when: $("when").value,
+    repeat: $("repeat").value, interval: Number($("interval").value) || 1,
+    deadlineMinutes: deadline ? Number(deadline) : null
+  };
+  $("editor-save").disabled = true;
+  try {
+    if (editing) await api(`/api/occurrences/${editing.id}/edit`, { ...alarm, scope: editing.scope });
+    else await api("/api/alarms", alarm);
+    toast((editing ? "Saved: " : "Created: ") + alarm.title.trim());
+    $("editor").close();
+    refresh();
+  } catch (error) {
+    // A toast would sit behind the open dialog, so the problem shows inside it.
+    $("editor-error").textContent = error.message;
+    $("editor-error").hidden = false;
+  } finally { $("editor-save").disabled = false; }
+});
+
+api("/api/state").then(showApp, () => showLogin());
+</script>
+</body>
+</html>
