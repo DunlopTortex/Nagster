@@ -6,7 +6,7 @@ import NagsterCore
 // The buttons on an Important alarm. iOS runs these in the app (starting it in the background if need be), so the
 // answer is recorded and synced to the PC like any other.
 
-nonisolated struct CompleteImportantAlarmIntent: LiveActivityIntent {
+struct CompleteImportantAlarmIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "Complete alarm"
     static let isDiscoverable = false
 
@@ -20,14 +20,14 @@ nonisolated struct CompleteImportantAlarmIntent: LiveActivityIntent {
 
     func perform() async throws -> some IntentResult {
         if let target = NotificationTarget(encoded: target) {
-            await MainActor.run { AppModel.current?.complete(target) }
+            AppModel.current?.complete(target)
             await AppModel.current?.syncNow()
         }
         return .result()
     }
 }
 
-nonisolated struct SnoozeImportantAlarmIntent: LiveActivityIntent {
+struct SnoozeImportantAlarmIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "Snooze alarm"
     static let isDiscoverable = false
 
@@ -44,7 +44,7 @@ nonisolated struct SnoozeImportantAlarmIntent: LiveActivityIntent {
     func perform() async throws -> some IntentResult {
         // AlarmKit runs the snooze countdown itself; this records it so the PC and the phone's list agree.
         if let target = NotificationTarget(encoded: target), let length = SnoozeDuration(duration) {
-            await MainActor.run { AppModel.current?.snoozeFromAlarm(target, for: length) }
+            AppModel.current?.snoozeFromAlarm(target, for: length)
             await AppModel.current?.syncNow()
         }
         return .result()
