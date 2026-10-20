@@ -65,8 +65,8 @@ is installed again.
 Generate the project as above, then for both the Nagster and NagsterWidgets targets choose your team
 under **Signing & Capabilities** and give them bundle IDs your account can own (the widget's must
 start with the app's). A free personal team can't use Time Sensitive Notifications; remove that
-capability if Xcode objects. Choose your iPhone as the destination and press ⌘R. Running
-`xcodegen generate` again resets these signing choices.
+capability if Xcode objects. Choose your iPhone as the destination and press ⌘R. Running `xcodegen
+generate` again resets these signing choices.
 
 ### TestFlight (paid Apple Developer account)
 
@@ -95,5 +95,6 @@ One-off setup:
 
 5. Install TestFlight on the iPhone and add yourself as an internal tester in App Store Connect.
 
-Each upload takes 10–30 minutes to process before it appears in TestFlight. Build numbers come from
-the workflow's run number, so they always increase. TestFlight builds stay installable for 90 days.
+To publish a build after that, see [publishing to TestFlight](../docs/Testflight_Publish.md). Each
+upload takes 10–30 minutes to process before it appears in TestFlight. Build numbers come from the
+workflow's run number, so they always increase. TestFlight builds stay installable for 90 days.
