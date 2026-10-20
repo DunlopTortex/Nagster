@@ -85,6 +85,8 @@ struct AlarmEditorView: View {
                             Text(start.formatted(date: .omitted, time: .shortened))
                                 .font(.system(size: 34, weight: .bold, design: .rounded).monospacedDigit())
                                 .foregroundStyle(Theme.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
                             Text(start.formatted(.dateTime.weekday(.wide).day().month(.wide)))
                                 .foregroundStyle(Theme.secondaryText)
                         }

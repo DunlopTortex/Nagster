@@ -186,8 +186,10 @@ private struct NowPanel: View {
                         .minimumScaleFactor(0.8)
                     if let occurrence {
                         Text(Formatting.time(occurrence.alertAt))
-                            .font(.system(size: 40, weight: .bold, design: .rounded).monospacedDigit())
+                            .font(.system(size: 32, weight: .bold, design: .rounded).monospacedDigit())
                             .foregroundStyle(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
                     Text(detail)
                         .font(.footnote.weight(.medium))
