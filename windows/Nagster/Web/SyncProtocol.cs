@@ -59,7 +59,10 @@ public sealed record SyncDefinition(
     bool Important,
     bool Enabled,
     string? ImportedFrom,
-    long Revision);
+    long Revision,
+    // This alarm's own automatic snooze ("10m"): the PC's auto-snooze and the phone's reminder interval for it.
+    // Null uses each device's setting.
+    string? AutoSnoozeOverride = null);
 
 public sealed record SyncOccurrence(
     Guid Id,

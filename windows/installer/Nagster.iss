@@ -1,5 +1,5 @@
 #define AppName "Nagster"
-#define AppVersion "0.3.1"
+#define AppVersion "0.3.2"
 #define AppExe "Nagster.exe"
 
 [Setup]

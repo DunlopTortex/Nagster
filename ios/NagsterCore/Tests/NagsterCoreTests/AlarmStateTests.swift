@@ -74,8 +74,10 @@ struct AlarmStateTests {
         let first = daily.occurrence(at: nine)
         _ = state.act(.snooze, on: first, until: nine.adding(.minute, 5), now: nine)
         daily.title = "Stretch properly"
+        daily.autoSnoozeOverride = "5m"
         _ = state.save(daily)
         #expect(state.occurrences[first.id]?.status == .snoozed)
+        #expect(state.definitions[daily.id]?.nagAfter == SnoozeDuration(amount: 5, unit: .minutes))
         var fromNextRun = daily
         fromNextRun.firstDue = nine.adding(.day, 1)
         _ = state.save(fromNextRun)

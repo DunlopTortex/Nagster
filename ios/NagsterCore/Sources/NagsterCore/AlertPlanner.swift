@@ -25,7 +25,8 @@ public enum AlertPlanner {
     public static let maxNags = 24
     public static let lookAheadDays = 14
 
-    /// - Parameter nagEvery: How long between reminders; the PC's automatic snooze length when nil.
+    /// - Parameter nagEvery: How long between reminders for alarms without their own length; the PC's automatic
+    ///   snooze length when nil.
     public static func plan(_ state: AlarmState, now: WallTime, pausedUntil: WallTime? = nil,
                             nagEvery: SnoozeDuration? = nil) -> [PlannedAlert] {
         let end = now.adding(.day, lookAheadDays)
@@ -39,10 +40,13 @@ public enum AlertPlanner {
             let ordered = series.sorted { a, b in a.scheduledFor < b.scheduledFor }
             for (index, occurrence) in ordered.enumerated() {
                 let replacedAt = index + 1 < ordered.count ? ordered[index + 1].alertAt : nil
-                let important = state.definitions[occurrence.definitionId]?.important ?? false
+                let definition = state.definitions[occurrence.definitionId]
+                let important = definition?.important ?? false
+                // An alarm's own nag length wins over the device's.
+                let nagStep = definition?.nagAfter ?? step
                 var fireAt = occurrence.alertAt
                 for nag in 0...maxNags {
-                    if nag > 0 { fireAt = step.added(to: fireAt) }
+                    if nag > 0 { fireAt = nagStep.added(to: fireAt) }
                     if let replacedAt, fireAt >= replacedAt { break }
                     if let deadline = occurrence.deadline, fireAt > deadline { break }
                     if fireAt > end { break }

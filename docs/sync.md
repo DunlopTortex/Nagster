@@ -42,9 +42,10 @@ of your snooze choices; other choices, Dismiss and Reschedule are in the app.
 The PC nags by ringing again after each automatic snooze until someone answers. Notifications can't
 wait for an answer, so the phone schedules the repeats in advance. Each device has its own interval,
 10 minutes unless changed: the PC's automatic snooze length in its Settings, and **Nag again after**
-in the phone's Settings. Reminders stop at the alarm's deadline, or when its next occurrence comes
-due. iOS allows an app only 64 scheduled notifications, so the phone keeps the soonest 60 and tops
-them up each time it opens or syncs.
+in the phone's Settings. An alarm can also have its own **Nag again after** length, set in either
+app's editor and synced: it overrides both settings for that alarm. Reminders stop at the alarm's
+deadline, or when its next occurrence comes due. iOS allows an app only 64 scheduled notifications,
+so the phone keeps the soonest 60 and tops them up each time it opens or syncs.
 
 Each notification has **Complete**, up to four snooze buttons (the first of the PC's snooze choices)
 and **Dismiss**. Press and hold, or swipe down, to see them all.

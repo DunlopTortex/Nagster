@@ -29,6 +29,8 @@ struct AlarmEditorView: View {
     @State private var deadlineAt: Date
     @State private var devices: AlarmDevices
     @State private var important: Bool
+    /// This alarm's own nag length; nil follows Settings.
+    @State private var nagAfter: SnoozeDuration?
     @State private var problem: String?
 
     enum Ending: String, CaseIterable, Identifiable {
@@ -71,6 +73,7 @@ struct AlarmEditorView: View {
         _deadlineAt = State(initialValue: definition?.absoluteDeadline?.date() ?? firstDue.addingTimeInterval(3600))
         _devices = State(initialValue: definition?.devices ?? .all)
         _important = State(initialValue: definition?.important ?? false)
+        _nagAfter = State(initialValue: definition?.nagAfter)
     }
 
     var body: some View {
@@ -125,6 +128,18 @@ struct AlarmEditorView: View {
                     case .afterEach: Stepper("Within \(deadlineMinutes) min of each alert", value: $deadlineMinutes, in: 5...10_080, step: 5)
                     case .fixed: DatePicker("Complete by", selection: $deadlineAt, in: start...)
                     }
+                }
+
+                Section {
+                    Picker("Nag again after", selection: $nagAfter) {
+                        Text("Default (\(model.nagInterval.label))").tag(SnoozeDuration?.none)
+                        ForEach(nagChoices, id: \.self) { Text($0.label).tag(Optional($0)) }
+                    }
+                } header: {
+                    Text("Reminders")
+                } footer: {
+                    Text("How long this alarm waits before reminding you again if you don't answer. On the PC, it's how "
+                         + "long the alarm snoozes itself when nobody answers.")
                 }
 
                 Section {
@@ -224,6 +239,13 @@ struct AlarmEditorView: View {
         }
     }
 
+    /// The usual lengths, plus this alarm's own if it was set to something else on the PC.
+    private var nagChoices: [SnoozeDuration] {
+        var choices = AppModel.nagIntervalChoices
+        if let nagAfter, !choices.contains(nagAfter) { choices.append(nagAfter) }
+        return choices
+    }
+
     private var unit: String {
         let units: [RepeatKind: (String, String)] = [.minutes: ("minute", "minutes"), .hours: ("hour", "hours"), .daily: ("day", "days"),
                                                      .weekly: ("week", "weeks"), .monthly: ("month", "months"), .yearly: ("year", "years")]
@@ -267,6 +289,7 @@ struct AlarmEditorView: View {
         definition.absoluteDeadline = deadline == .fixed ? WallTime(deadlineAt) : nil
         definition.devices = devices
         definition.important = important && devices != .desktop
+        definition.autoSnoozeOverride = nagAfter?.description
         model.save(definition)
         close()
     }

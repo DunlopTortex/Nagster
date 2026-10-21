@@ -234,6 +234,17 @@ internal static class SyncChecks
         check(Sync(engine, 0, rename).Results.Single().Applied && stored.Title == "Renamed on phone" && stored.Sound == "builtin:chime",
             "editing on the phone keeps settings only the PC has");
 
+        var nagEvery5 = SyncApi.ToWire(stored) with { AutoSnoozeOverride = "5" };
+        check(Sync(engine, 0, new SyncOp(Guid.NewGuid(), SyncOps.UpsertAlarm, stored.Revision, Definition: nagEvery5)).Results.Single().Applied &&
+              stored.AutoSnoozeOverride == "5m" && SyncApi.ToWire(stored).AutoSnoozeOverride == "5m",
+            "an alarm's own nag length syncs both ways");
+        var backToDefault = SyncApi.ToWire(stored) with { AutoSnoozeOverride = null };
+        var invalidNag = SyncApi.ToWire(stored) with { AutoSnoozeOverride = "soon" };
+        check(!Sync(engine, 0, new SyncOp(Guid.NewGuid(), SyncOps.UpsertAlarm, stored.Revision, Definition: invalidNag)).Results.Single().Applied &&
+              Sync(engine, 0, new SyncOp(Guid.NewGuid(), SyncOps.UpsertAlarm, stored.Revision, Definition: backToDefault)).Results.Single().Applied &&
+              stored.AutoSnoozeOverride is null,
+            "an alarm's nag length can go back to the setting, and an invalid one is refused");
+
         var stale = new SyncOp(Guid.NewGuid(), SyncOps.UpsertAlarm, 0, Definition: phoneCopy with { Title = "Stale" });
         check(!Sync(engine, 0, stale).Results.Single().Applied && stored.Title == "Renamed on phone", "an edit made on the PC since wins");
 

@@ -128,6 +128,7 @@ public struct AlarmState: Hashable, Sendable {
                 kept.description = incoming.description
                 kept.devices = incoming.devices
                 kept.important = incoming.important
+                kept.autoSnoozeOverride = incoming.autoSnoozeOverride
                 definitions[incoming.id] = kept
                 return
             }

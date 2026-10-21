@@ -11,15 +11,15 @@ device answers it on both.
   to yearly (weekdays, nth or last weekday, end date or count), event reminders, deadlines.
 - **Ring on** each alarm: all devices, the PC only or the iPhone only.
 - Rings with notifications by default. Each has **Complete**, snooze buttons and **Dismiss**, and
-  repeats until answered, every 10 minutes unless you change **Nag again after** in Settings.
+  repeats until answered, every 10 minutes unless you change **Nag again after** in Settings, or for
+  one alarm in its editor.
 - **Important** alarms ring full screen through AlarmKit, like the Clock app, even in silent mode.
 - Pauses alerts on the phone for a while, independently of the PC.
 - Shares text with the PC's clipboard: send text to the PC, or copy what's on the PC's clipboard to
   the iPhone.
 
-Calendar import and Pushover stay on the PC; imported alarms reach the phone
-through sync. See [syncing](../docs/sync.md) for setup, how nagging works on the phone, and how
-conflicts are settled.
+Calendar import and Pushover stay on the PC; imported alarms reach the phone through sync. See
+[syncing](../docs/sync.md) for setup, how nagging works on the phone, and how conflicts are settled.
 
 ## Requirements
 
@@ -84,9 +84,9 @@ One-off setup:
    the bundle IDs in `project.yml`.
 2. In App Store Connect, create an app with that bundle ID. It never needs releasing.
 3. Under **Users and Access → Integrations → App Store Connect API**, create a key with the
-   **Admin** role. Admin is needed for Xcode to create the cloud-managed distribution certificate
-   it signs uploads with; App Manager can archive but not upload. Note its Key ID and the Issuer
-   ID, and download the `.p8` file (only possible once).
+   **Admin** role. Admin is needed for Xcode to create the cloud-managed distribution certificate it
+   signs uploads with; App Manager can archive but not upload. Note its Key ID and the Issuer ID,
+   and download the `.p8` file (only possible once).
 4. Add these repository secrets in GitHub (**Settings → Secrets and variables → Actions**):
 
    | Secret                        | Value                                                     |

@@ -58,6 +58,17 @@ struct AlertPlannerTests {
         #expect(plan.prefix(3).map(\.fireAt) == [nine, nine.adding(.minute, 10), nine.adding(.minute, 20)])
     }
 
+    @Test func anAlarmsOwnNagLengthWins() {
+        let quick = AlarmDefinition(title: "Kettle", firstDue: nine, autoSnoozeOverride: "2m")
+        let plain = AlarmDefinition(title: "Post", firstDue: nine)
+        let plan = AlertPlanner.plan(state(quick, plain), now: nine.adding(.minute, -1),
+                                     nagEvery: SnoozeDuration(amount: 10, unit: .minutes))
+        #expect(plan.filter { $0.occurrence.definitionId == quick.id }.prefix(3).map(\.fireAt)
+                == [nine, nine.adding(.minute, 2), nine.adding(.minute, 4)])
+        #expect(plan.filter { $0.occurrence.definitionId == plain.id }.prefix(2).map(\.fireAt)
+                == [nine, nine.adding(.minute, 10)])
+    }
+
     @Test func pausedAlertsAreSkipped() {
         let once = AlarmDefinition(title: "Later", firstDue: nine)
         let plan = AlertPlanner.plan(state(once), now: nine.adding(.minute, -1), pausedUntil: nine.adding(.minute, 90))

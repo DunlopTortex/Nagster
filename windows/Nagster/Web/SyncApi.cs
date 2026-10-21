@@ -112,7 +112,8 @@ public static class SyncApi
 
     /// <summary>
     /// Builds an alarm from the phone's copy. Settings the phone doesn't edit (sound, response time, calendar source)
-    /// are kept from the PC's copy, so editing on the phone never clears them.
+    /// are kept from the PC's copy, so editing on the phone never clears them. The alarm's own automatic snooze
+    /// length is edited on both and comes from the phone's copy.
     /// </summary>
     /// <returns>A message describing the problem, or null with <paramref name="definition"/> set.</returns>
     public static string? ToDefinition(SyncDefinition incoming, AlarmDefinition? existing, out AlarmDefinition? definition)
@@ -133,6 +134,12 @@ public static class SyncApi
             repeat.NthWeekday is < 0 or > 6 || repeat.Count is < 1) return "The repeat settings aren't valid.";
         if (incoming.ReminderMinutes is < 0 or > 10080) return "Reminder must be between 0 and 10080 minutes before.";
         if (incoming.DeadlineAfterMinutes is < 1 or > 10080) return "Deadline must be between 1 and 10080 minutes after each alert.";
+        SnoozeDuration? nagAfter = null;
+        if (!string.IsNullOrEmpty(incoming.AutoSnoozeOverride))
+        {
+            if (!SnoozeDuration.TryParse(incoming.AutoSnoozeOverride, out var parsed)) return "The nag length isn't valid.";
+            nagAfter = parsed;
+        }
 
         definition = existing?.Copy() ?? new AlarmDefinition { Id = incoming.Id };
         definition.Title = title;
@@ -151,6 +158,7 @@ public static class SyncApi
         definition.DeadlineAfterMinutes = incoming.DeadlineAfterMinutes;
         definition.Devices = devices;
         definition.Important = incoming.Important;
+        definition.AutoSnoozeOverride = nagAfter?.ToString();
         return null;
     }
 
@@ -180,7 +188,7 @@ public static class SyncApi
         new SyncRepeat(d.Repeat.Kind.ToString(), d.Repeat.Interval, d.Repeat.Weekdays, d.Repeat.DayOfMonth, d.Repeat.Nth,
             (int)d.Repeat.NthWeekday, d.Repeat.UseLastDayForShortMonths, SyncTime.Format(d.Repeat.Until), d.Repeat.Count),
         SyncTime.Format(d.AbsoluteDeadline), d.DeadlineAfterMinutes, d.Devices.ToString(), d.Important, d.Enabled, d.ImportedFrom,
-        d.Revision);
+        d.Revision, d.AutoSnoozeOverride);
 
     /// <summary>Active only means "on this PC's screen", so the phone sees it as waiting.</summary>
     public static SyncOccurrence ToWire(AlarmOccurrence o) => new(

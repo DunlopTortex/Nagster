@@ -44,17 +44,20 @@ public struct AlarmDefinition: Codable, Hashable, Sendable, Identifiable {
     public var importedFrom: String?
     /// The PC's revision when this alarm last changed there; 0 for an alarm the PC hasn't seen yet.
     public var revision: Int64
+    /// This alarm's own nag length ("5m"): how often the phone reminds you and how long the PC auto-snoozes it.
+    /// Nil uses each device's setting.
+    public var autoSnoozeOverride: String?
 
     enum CodingKeys: String, CodingKey {
         case id, title, description, isEvent, eventEnd, reminderMinutes, firstDue, absoluteDeadline, deadlineAfterMinutes,
-             devices, important, enabled, importedFrom, revision
+             devices, important, enabled, importedFrom, revision, autoSnoozeOverride
         case repeatRule = "repeat"
     }
 
     public init(id: UUID = UUID(), title: String, description: String = "", isEvent: Bool = false, eventEnd: WallTime? = nil,
                 reminderMinutes: Int = 0, firstDue: WallTime, repeatRule: RepeatRule = RepeatRule(), absoluteDeadline: WallTime? = nil,
                 deadlineAfterMinutes: Int? = nil, devices: AlarmDevices = .all, important: Bool = false, enabled: Bool = true,
-                importedFrom: String? = nil, revision: Int64 = 0) {
+                importedFrom: String? = nil, revision: Int64 = 0, autoSnoozeOverride: String? = nil) {
         self.id = id
         self.title = title
         self.description = description
@@ -70,9 +73,13 @@ public struct AlarmDefinition: Codable, Hashable, Sendable, Identifiable {
         self.enabled = enabled
         self.importedFrom = importedFrom
         self.revision = revision
+        self.autoSnoozeOverride = autoSnoozeOverride
     }
 
     public var isRecurring: Bool { repeatRule.kind != .once }
+
+    /// This alarm's own nag length, if it has a valid one.
+    public var nagAfter: SnoozeDuration? { autoSnoozeOverride.flatMap(SnoozeDuration.init) }
 
     /// The occurrence due at `due`, as both apps create it: same ID, alert time and deadline.
     public func occurrence(at due: WallTime) -> AlarmOccurrence {
