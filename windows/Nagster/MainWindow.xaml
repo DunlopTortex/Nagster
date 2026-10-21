@@ -73,8 +73,9 @@
                 <!-- Filters -->
                 <DockPanel Grid.Row="1" Margin="22,20,22,0">
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                        <RadioButton Style="{StaticResource Segment}" GroupName="Filter" Content="All" IsChecked="True" Click="All_Click" />
-                        <RadioButton Style="{StaticResource Segment}" GroupName="Filter" Content="Pending" Click="Pending_Click" />
+                        <RadioButton Style="{StaticResource Segment}" GroupName="Filter" Content="All" Click="All_Click" />
+                        <RadioButton x:Name="PendingFilter" Style="{StaticResource Segment}" GroupName="Filter" Content="Pending" IsChecked="True" Click="Pending_Click" />
+                        <RadioButton Style="{StaticResource Segment}" GroupName="Filter" Content="Dismissed" Click="Dismissed_Click" />
                         <RadioButton Style="{StaticResource Segment}" GroupName="Filter" Content="Completed" Click="Completed_Click" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
