@@ -54,14 +54,15 @@ TestFlight builds stay installable for 90 days.
 
 ## If it fails
 
-| What you see                                       | What to do                                                                                  |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| "TestFlight secrets aren't set up yet"             | Add the four secrets in **Settings → Secrets and variables → Actions** (see the iOS README) |
-| Signing or provisioning errors in **Archive**      | Check `APPLE_TEAM_ID` and the API key secrets are right                                     |
-| "Cloud signing permission error" in **Upload**     | The API key needs the **Admin** role; create a new one and update its two secrets           |
-| "No suitable application records were found"       | The App Store Connect app's bundle ID must match `com.dgutilities.nagster`                  |
-| "The bundle version must be higher"                | Run it again; the new run number is higher                                                  |
-| The version is closed for new builds               | That version is already released or in review; publish with a higher version                |
-| The job waits a long time, then is cancelled       | GitHub had no macOS runner free; re-run it from the run's page                              |
-| "Missing required icon file" or `CFBundleIconName` | Run `windows/tools/CreateIosIcon.ps1` to recreate the icon, then publish with a new tag     |
-| A fix you pushed isn't in the rebuilt app          | Re-running a job builds the tag's original commit; publish the fix with a new tag           |
+| What you see                                                  | What to do                                                                                  |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| "TestFlight secrets aren't set up yet"                        | Add the four secrets in **Settings → Secrets and variables → Actions** (see the iOS README) |
+| Signing or provisioning errors in **Archive**                 | Check `APPLE_TEAM_ID` and the API key secrets are right                                     |
+| "Cloud signing permission error" in **Upload**                | The API key needs the **Admin** role; create a new one and update its two secrets           |
+| "No suitable application records were found"                  | The App Store Connect app's bundle ID must match `com.dgutilities.nagster`                  |
+| "The bundle version must be higher"                           | Run it again; the new run number is higher                                                  |
+| The version is closed for new builds                          | That version is already released or in review; publish with a higher version                |
+| The job waits a long time, then is cancelled                  | GitHub had no macOS runner free; re-run it from the run's page                              |
+| "Missing required icon file" or `CFBundleIconName`            | Run `windows/tools/CreateIosIcon.ps1` to recreate the icon, then publish with a new tag     |
+| A fix you pushed isn't in the rebuilt app                     | Re-running a job builds the tag's original commit; publish the fix with a new tag           |
+| "Your account has reached the maximum number of certificates" | Revoke unused "Created via API" Apple Development certificates in the developer portal      |

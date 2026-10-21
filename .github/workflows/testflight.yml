@@ -80,19 +80,18 @@ jobs:
         if: steps.secrets.outputs.ready == 'true'
         run: |
           set -o pipefail
-          # Every upload needs a higher build number; the workflow's run number always rises.
+          # Archived unsigned: signing here would make Xcode create a new development certificate on every fresh
+          # runner, and Apple caps how many an account can have. The upload step signs it for distribution with
+          # Apple's cloud-managed certificate instead. Every upload needs a higher build number; the workflow's
+          # run number always rises.
           xcodebuild archive \
             -project Nagster.xcodeproj \
             -scheme Nagster \
             -configuration Release \
             -destination "generic/platform=iOS" \
             -archivePath "$RUNNER_TEMP/Nagster.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGNING_ALLOWED=NO \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             $VERSION_SETTING
 
