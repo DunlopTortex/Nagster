@@ -26,6 +26,8 @@ internal static class SyncChecks
         WithEngine(engine => CheckRevisionsAndTombstones(check, engine));
         WithEngine(engine => CheckAnswersFromThePhone(check, engine));
         WithEngine(engine => CheckAlarmEditsFromThePhone(check, engine));
+        CheckAlarmHoursRange(check);
+        WithEngine(engine => CheckAlarmHours(check, engine));
         CheckRekeyingOldOccurrences(check);
         CheckWireFormat(check);
     }
@@ -255,6 +257,43 @@ internal static class SyncChecks
         var gone = Sync(engine, 0, delete);
         check(gone.Results.Single().Applied && engine.State.Definitions.All(d => d.Id != created.Id), "deleting on the phone deletes on the PC");
         check(!Sync(engine, 0, upsert with { OpId = Guid.NewGuid() }).Results.Single().Applied, "a deleted alarm isn't brought back by an old edit");
+    }
+
+    private static void CheckAlarmHoursRange(Action<bool, string> check)
+    {
+        var day = new AlarmHours { Enabled = true, Start = TimeSpan.FromHours(8), End = TimeSpan.FromHours(18) };
+        var night = new AlarmHours { Enabled = true, Start = TimeSpan.FromHours(22), End = TimeSpan.FromHours(6) };
+        var date = new DateTime(2026, 10, 20);
+        check(day.Contains(date.AddHours(8)) && !day.Contains(date.AddHours(18)) && !day.Contains(date.AddHours(7.5)) &&
+              night.Contains(date.AddHours(23)) && night.Contains(date.AddHours(3)) && !night.Contains(date.AddHours(12)) &&
+              new AlarmHours { Start = TimeSpan.FromHours(8), End = TimeSpan.FromHours(18) }.Contains(date.AddHours(23)),
+            "alarm hours include the start, exclude the end, may cross midnight, and do nothing when off");
+        check(day.NextStart(date.AddHours(6)) == date.AddHours(8) && day.NextStart(date.AddHours(19)) == date.AddDays(1).AddHours(8),
+            "outside alarm hours, the next start is later the same day or the next morning");
+    }
+
+    private static void CheckAlarmHours(Action<bool, string> check, AlarmEngine engine)
+    {
+        var now = DateTime.Now;
+        // Hours that start an hour from now and run for an hour, so now is outside them whatever the time.
+        engine.State.Settings.AlarmHours = new AlarmHours
+        {
+            Enabled = true, Start = now.AddHours(1).TimeOfDay, End = now.AddHours(2).TimeOfDay
+        };
+        var start = engine.State.Settings.AlarmHours.NextStart(now);
+        var pcOnly = new AlarmDefinition { Title = "PC only", FirstDue = now.AddMinutes(-1), Devices = AlarmDevices.Desktop };
+        var everywhere = new AlarmDefinition { Title = "Everywhere", FirstDue = now.AddMinutes(-1) };
+        var urgent = new AlarmDefinition { Title = "Urgent", FirstDue = now.AddMinutes(-1), Devices = AlarmDevices.Desktop, DeadlineAfterMinutes = 30 };
+        engine.Add(pcOnly);
+        engine.Add(everywhere);
+        engine.Add(urgent);
+        var ready = engine.Ready(now);
+        var held = engine.State.Occurrences.Single(o => o.DefinitionId == pcOnly.Id);
+        check(held.Status == OccurrenceStatus.Snoozed && held.AlertAt == start && held.LastAction.StartsWith(AlarmEngine.OutsideHoursPrefix) &&
+              ready.All(o => o.DefinitionId != pcOnly.Id),
+            "a PC-only alarm due outside alarm hours is snoozed until they start");
+        check(ready.Any(o => o.DefinitionId == everywhere.Id) && ready.Any(o => o.DefinitionId == urgent.Id),
+            "alarms for all devices, and ones whose deadline comes first, ring outside alarm hours");
     }
 
     private static void CheckRekeyingOldOccurrences(Action<bool, string> check)

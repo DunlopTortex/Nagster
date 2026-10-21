@@ -72,6 +72,19 @@ struct SettingsView: View {
                          : "Each alarm alerts once on this iPhone, then waits quietly. The PC still nags.")
                 }
 
+                Section {
+                    Toggle("Only during alarm hours", isOn: $model.alarmHours.enabled)
+                    if model.alarmHours.enabled {
+                        DatePicker("From", selection: time(\.startMinutes), displayedComponents: .hourAndMinute)
+                        DatePicker("To", selection: time(\.endMinutes), displayedComponents: .hourAndMinute)
+                    }
+                } header: {
+                    Text("Alarm hours")
+                } footer: {
+                    Text("iPhone-only alarms that fall outside these hours are snoozed until they start, unless their deadline "
+                         + "comes first. Alarms for all devices ring as usual; the PC has its own hours.")
+                }
+
                 Section("Pause alerts on this iPhone") {
                     if model.isPaused, let until = model.pausedUntil {
                         LabeledContent("Paused until", value: until == .distantFuture ? "you resume" : until.formatted(date: .abbreviated, time: .shortened))
@@ -106,6 +119,19 @@ struct SettingsView: View {
             }
             .task { notificationsAllowed = await model.notificationsAllowed() }
         }
+    }
+
+    /// A time picker's value for one end of the alarm hours, stored as minutes after midnight.
+    private func time(_ end: WritableKeyPath<AlarmHours, Int>) -> Binding<Date> {
+        Binding(
+            get: {
+                let minutes = model.alarmHours[keyPath: end]
+                return Calendar.current.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: .now) ?? .now
+            },
+            set: { date in
+                let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+                model.alarmHours[keyPath: end] = (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
+            })
     }
 
     private func signIn() async {

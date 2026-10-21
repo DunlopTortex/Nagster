@@ -186,6 +186,8 @@ public sealed class AppSettings
 
     public QuietHours QuietHours { get; set; } = new();
 
+    public AlarmHours AlarmHours { get; set; } = new();
+
     /// <summary>
     /// While set, no alarm goes off (no popups, sounds or automatic snoozes). Once this time passes the user is asked
     /// to unpause or extend the pause; DateTime.MaxValue means paused until they unpause. Saved, so a pause survives restarts.
@@ -219,6 +221,32 @@ public sealed class QuietHours
         if (!Enabled || Start == End) return false;
         var time = moment.TimeOfDay;
         return Start < End ? time >= Start && time < End : time >= Start || time < End;
+    }
+}
+
+/// <summary>
+/// The hours this PC rings alarms set to ring on the PC only. One that comes due outside them is snoozed until
+/// they next start, unless its deadline comes first. Alarms for all devices ignore them, so the phone (with its own
+/// hours) isn't held back. The hours may cross midnight; a start equal to the end means all day.
+/// </summary>
+public sealed class AlarmHours
+{
+    public bool Enabled { get; set; }
+    public TimeSpan Start { get; set; } = new(8, 0, 0);
+    public TimeSpan End { get; set; } = new(21, 0, 0);
+
+    public bool Contains(DateTime moment)
+    {
+        if (!Enabled || Start == End) return true;
+        var time = moment.TimeOfDay;
+        return Start < End ? time >= Start && time < End : time >= Start || time < End;
+    }
+
+    /// <summary>When the hours next start, at or after <paramref name="moment"/>: later the same day or the next.</summary>
+    public DateTime NextStart(DateTime moment)
+    {
+        var sameDay = moment.Date + Start;
+        return sameDay >= moment ? sameDay : sameDay.AddDays(1);
     }
 }
 

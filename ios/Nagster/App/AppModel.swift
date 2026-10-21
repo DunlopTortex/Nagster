@@ -47,6 +47,14 @@ final class AppModel {
         didSet { defaults.set(noNagAlarms.map(\.uuidString), forKey: Keys.noNagAlarms) }
     }
 
+    /// The hours this phone rings iPhone-only alarms; ones that fall outside are snoozed to the start.
+    var alarmHours: AlarmHours {
+        didSet {
+            defaults.set(try? JSONEncoder().encode(alarmHours), forKey: Keys.alarmHours)
+            replanAlerts()
+        }
+    }
+
     /// The choices offered for how long an unanswered alarm waits before this phone reminds you again.
     static let nagIntervalChoices = ["1m", "2m", "5m", "10m", "15m", "30m", "1h"].compactMap(SnoozeDuration.init)
     static let defaultNagInterval = SnoozeDuration(amount: 10, unit: .minutes)
@@ -73,6 +81,7 @@ final class AppModel {
         static let nagInterval = "nagInterval"
         static let naggingEnabled = "naggingEnabled"
         static let noNagAlarms = "noNagAlarms"
+        static let alarmHours = "alarmHours"
         static let lastSynced = "lastSynced"
         static let deviceID = "deviceID"
     }
@@ -88,6 +97,8 @@ final class AppModel {
         nagInterval = defaults.string(forKey: Keys.nagInterval).flatMap(SnoozeDuration.init) ?? Self.defaultNagInterval
         naggingEnabled = defaults.object(forKey: Keys.naggingEnabled) as? Bool ?? true
         noNagAlarms = Set((defaults.stringArray(forKey: Keys.noNagAlarms) ?? []).compactMap(UUID.init(uuidString:)))
+        alarmHours = defaults.data(forKey: Keys.alarmHours).flatMap { try? JSONDecoder().decode(AlarmHours.self, from: $0) }
+            ?? AlarmHours()
         (state, pendingOps) = repository.load()
         syncStatus = client == nil ? .notSetUp : .idle(lastSynced: defaults.object(forKey: Keys.lastSynced) as? Date)
     }
@@ -229,8 +240,9 @@ final class AppModel {
 
     /// Re-plans notifications and Important alarms from the current state.
     func refreshAlerts() async {
+        holdOutsideAlarmHours()
         let plan = AlertPlanner.plan(state, now: now, pausedUntil: pausedUntil.map { WallTime($0) }, nagEvery: nagInterval,
-                                     nagging: naggingEnabled, noNagAlarms: noNagAlarms)
+                                     nagging: naggingEnabled, noNagAlarms: noNagAlarms, alarmHours: alarmHours)
         await notifications.schedule(plan, state: state, alarmKitRingsImportant: importantAlarms.isAuthorized)
         await importantAlarms.schedule(plan, state: state)
     }
@@ -288,6 +300,16 @@ final class AppModel {
     }
 
     /// Syncs a couple of seconds after the last change, so a burst of taps goes in one request.
+    /// Snoozes iPhone-only alarms that would ring outside the alarm hours until they start, as real snoozes the PC
+    /// hears about. Runs whenever alerts are planned, as the phone isn't awake to do it when the alarm comes due.
+    private func holdOutsideAlarmHours() {
+        let ops = state.holdOutsideAlarmHours(alarmHours, now: now)
+        guard !ops.isEmpty else { return }
+        pendingOps.append(contentsOf: ops)
+        repository.save(state, ops: pendingOps)
+        scheduleSync()
+    }
+
     private func scheduleSync() {
         syncTask?.cancel()
         syncTask = Task {

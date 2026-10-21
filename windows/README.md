@@ -4,7 +4,7 @@ A Windows WPF tray application for persistent alarms and calendar events.
 
 ## Run
 
-Install with `dist/Nagster-Setup-0.3.2.exe`, or run the self-contained executable in
+Install with `dist/Nagster-Setup-0.3.3.exe`, or run the self-contained executable in
 `publish/Nagster.exe`. The installer registers the tray app to start when you sign in. The tray icon
 opens the calendar, new-alarm form, active-alarm center, and settings. Closing the calendar keeps
 alarms running in the tray; use **Exit** from the tray menu to stop the app.
@@ -33,6 +33,8 @@ If the app is already running, a second invocation forwards its command to the r
 - Always-on-top semi-transparent popup stack with an active-alarm center for overflow.
 - Calendar import from Google, Microsoft 365, desktop Outlook and secret ICS links, with ignore
   rules and no duplicates. See [calendar setup](docs/calendar-setup.md).
+- Optional alarm hours: PC-only alarms that come due outside them are snoozed until they next start,
+  unless their deadline comes first.
 - Optional password-protected web interface (Settings → Web access) for answering and editing alarms
   from a phone or another computer on your network.
 - Sync with the [iPhone app](../ios/README.md) through the web interface. Each alarm can ring on all

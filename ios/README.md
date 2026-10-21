@@ -16,6 +16,8 @@ device answers it on both.
   for one alarm, on the iPhone only.
 - **Important** alarms ring full screen through AlarmKit, like the Clock app, even in silent mode.
 - Pauses alerts on the phone for a while, independently of the PC.
+- **Alarm hours**: iPhone-only alarms that fall outside them are snoozed until they start. The PC has
+  its own hours for PC-only alarms; alarms for all devices ignore both.
 - Shares text with the PC's clipboard: send text to the PC, or copy what's on the PC's clipboard to
   the iPhone.
 

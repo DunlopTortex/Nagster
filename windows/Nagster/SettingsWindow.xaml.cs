@@ -33,6 +33,10 @@ public partial class SettingsWindow : Window
         QuietStart.SelectedTime = Settings.QuietHours.Start;
         QuietEnd.SelectedTime = Settings.QuietHours.End;
         QuietEnabled_Changed(this, new RoutedEventArgs());
+        AlarmHoursEnabled.IsChecked = Settings.AlarmHours.Enabled;
+        AlarmHoursStart.SelectedTime = Settings.AlarmHours.Start;
+        AlarmHoursEnd.SelectedTime = Settings.AlarmHours.End;
+        AlarmHoursEnabled_Changed(this, new RoutedEventArgs());
         LoadPushover();
         LoadWebAccess();
         UpdateCalendarSummary();
@@ -153,6 +157,14 @@ public partial class SettingsWindow : Window
         QuietTimesRow.Opacity = QuietTimesRow.IsEnabled ? 1 : 0.45;
     }
 
+    private void AlarmHoursEnabled_Changed(object sender, RoutedEventArgs e)
+    {
+        // Fires during InitializeComponent, before the time row exists.
+        if (AlarmHoursRow is null) return;
+        AlarmHoursRow.IsEnabled = AlarmHoursEnabled.IsChecked == true;
+        AlarmHoursRow.Opacity = AlarmHoursRow.IsEnabled ? 1 : 0.45;
+    }
+
     private int? SelectedVolume => SetAlarmVolume.IsChecked == true ? (int)AlarmVolume.Value : null;
 
     private void SetAlarmVolume_Changed(object sender, RoutedEventArgs e)
@@ -200,6 +212,10 @@ public partial class SettingsWindow : Window
         { Error("Enter a start and end time for quiet hours."); return; }
         if (QuietEnabled.IsChecked == true && quietStart == quietEnd)
         { Error("Quiet hours need different start and end times."); return; }
+        if (AlarmHoursStart.SelectedTime is not TimeSpan hoursStart || AlarmHoursEnd.SelectedTime is not TimeSpan hoursEnd)
+        { Error("Enter a start and end time for alarm hours."); return; }
+        if (AlarmHoursEnabled.IsChecked == true && hoursStart == hoursEnd)
+        { Error("Alarm hours need different start and end times."); return; }
         var pushoverUser = PushoverUserKey.Password.Trim();
         var pushoverToken = PushoverToken.Password.Trim();
         if (PushoverEnabled.IsChecked == true && (!LooksLikePushoverKey(pushoverUser) || !LooksLikePushoverKey(pushoverToken)))
@@ -217,6 +233,7 @@ public partial class SettingsWindow : Window
         Settings.SnoozeChoices = string.Join(", ", choices);
         Settings.DefaultSound = DefaultSound.Sound;
         Settings.QuietHours = new QuietHours { Enabled = QuietEnabled.IsChecked == true, Start = quietStart, End = quietEnd };
+        Settings.AlarmHours = new AlarmHours { Enabled = AlarmHoursEnabled.IsChecked == true, Start = hoursStart, End = hoursEnd };
         Settings.Pushover = new PushoverSettings
         {
             Enabled = PushoverEnabled.IsChecked == true,

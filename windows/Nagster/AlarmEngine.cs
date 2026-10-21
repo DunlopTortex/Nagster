@@ -296,6 +296,7 @@ public sealed class AlarmEngine
                 changed = true;
             }
         }
+        changed |= HoldOutsideAlarmHours(now);
         changed |= CollapseMissedRepeats(now);
         if (changed) Persist();
         return State.Occurrences.Where(o => (o.Status is OccurrenceStatus.Pending or OccurrenceStatus.Snoozed) && o.AlertAt <= now && RingsHere(o))
@@ -305,6 +306,34 @@ public sealed class AlarmEngine
     /// <summary>True unless the occurrence's alarm is set to ring only on the phone.</summary>
     private bool RingsHere(AlarmOccurrence occurrence) =>
         State.Definitions.FirstOrDefault(d => d.Id == occurrence.DefinitionId)?.RingsOnDesktop ?? true;
+
+    /// <summary>Start of an occurrence's last action after it was moved to the start of the alarm hours.</summary>
+    public const string OutsideHoursPrefix = "Outside alarm hours";
+
+    /// <summary>
+    /// Snoozes PC-only alarms that come due outside the alarm hours until the hours next start, as an automatic snooze.
+    /// One whose deadline comes before then is left to ring, as a snooze may never pass a deadline.
+    /// </summary>
+    /// <returns>True if any occurrence was moved.</returns>
+    private bool HoldOutsideAlarmHours(DateTime now)
+    {
+        var hours = State.Settings.AlarmHours;
+        if (hours.Contains(now)) return false;
+        var until = hours.NextStart(now);
+        var changed = false;
+        foreach (var occurrence in State.Occurrences.Where(o => (o.Status is OccurrenceStatus.Pending or OccurrenceStatus.Snoozed) && o.AlertAt <= now))
+        {
+            if (State.Definitions.FirstOrDefault(d => d.Id == occurrence.DefinitionId)?.Devices != AlarmDevices.Desktop) continue;
+            if (occurrence.Deadline is DateTime deadline && until > deadline) continue;
+            occurrence.AlertAt = until;
+            occurrence.Status = OccurrenceStatus.Snoozed;
+            occurrence.SnoozeCount++;
+            occurrence.LastAction = $"{OutsideHoursPrefix}: snoozed until {until:g}";
+            Stamp(occurrence, automatic: true);
+            changed = true;
+        }
+        return changed;
+    }
 
     /// <summary>Last action recorded on an occurrence skipped because a later one of the same alarm was also due.</summary>
     public const string MissedAction = "Missed: replaced by a later reminder";
