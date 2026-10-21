@@ -83,7 +83,8 @@ struct OccurrenceSheet: View {
                 }
             }
             .sheet(isPresented: $editing) {
-                if let definition { AlarmEditorView(definition: definition, nextRun: model.nextRun(of: definition.id)) }
+                if let definition { AlarmEditorView(definition: definition, nextRun: model.nextRun(of: definition.id),
+                                                nagOff: model.noNagAlarms.contains(definition.id)) }
             }
         }
         .presentationCornerRadius(32)

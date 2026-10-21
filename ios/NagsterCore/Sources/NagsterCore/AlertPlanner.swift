@@ -25,10 +25,14 @@ public enum AlertPlanner {
     public static let maxNags = 24
     public static let lookAheadDays = 14
 
-    /// - Parameter nagEvery: How long between reminders for alarms without their own length; the PC's automatic
-    ///   snooze length when nil.
+    /// - Parameters:
+    ///   - nagEvery: How long between reminders for alarms without their own length; the PC's automatic snooze
+    ///     length when nil.
+    ///   - nagging: False turns reminders off for every alarm: each occurrence alerts once.
+    ///   - noNagAlarms: Alarms whose reminders are turned off on this phone.
     public static func plan(_ state: AlarmState, now: WallTime, pausedUntil: WallTime? = nil,
-                            nagEvery: SnoozeDuration? = nil) -> [PlannedAlert] {
+                            nagEvery: SnoozeDuration? = nil, nagging: Bool = true,
+                            noNagAlarms: Set<UUID> = []) -> [PlannedAlert] {
         let end = now.adding(.day, lookAheadDays)
         let step = nagEvery ?? state.settings.autoSnoozeDuration
         let ringsHere = state.waitingOccurrences(through: end).filter { occurrence in
@@ -44,8 +48,9 @@ public enum AlertPlanner {
                 let important = definition?.important ?? false
                 // An alarm's own nag length wins over the device's.
                 let nagStep = definition?.nagAfter ?? step
+                let lastNag = nagging && !noNagAlarms.contains(occurrence.definitionId) ? maxNags : 0
                 var fireAt = occurrence.alertAt
-                for nag in 0...maxNags {
+                for nag in 0...lastNag {
                     if nag > 0 { fireAt = nagStep.added(to: fireAt) }
                     if let replacedAt, fireAt >= replacedAt { break }
                     if let deadline = occurrence.deadline, fireAt > deadline { break }

@@ -69,6 +69,17 @@ struct AlertPlannerTests {
                 == [nine, nine.adding(.minute, 10)])
     }
 
+    @Test func naggingCanBeTurnedOffForEverythingOrOneAlarm() {
+        let quiet = AlarmDefinition(title: "Quiet", firstDue: nine)
+        let loud = AlarmDefinition(title: "Loud", firstDue: nine)
+        let before = nine.adding(.minute, -1)
+        let none = AlertPlanner.plan(state(quiet, loud), now: before, nagging: false)
+        #expect(none.count == 2 && none.allSatisfy { $0.nag == 0 && $0.fireAt == nine })
+        let one = AlertPlanner.plan(state(quiet, loud), now: before, noNagAlarms: [quiet.id])
+        #expect(one.filter { $0.occurrence.definitionId == quiet.id }.map(\.nag) == [0])
+        #expect(one.filter { $0.occurrence.definitionId == loud.id }.count > 1)
+    }
+
     @Test func pausedAlertsAreSkipped() {
         let once = AlarmDefinition(title: "Later", firstDue: nine)
         let plan = AlertPlanner.plan(state(once), now: nine.adding(.minute, -1), pausedUntil: nine.adding(.minute, 90))

@@ -35,6 +35,17 @@ struct AppModelTests {
         #expect(model.pendingOps.last?.scheduledFor == dayAfter.scheduledFor)
     }
 
+    @Test func nagOffIsRememberedPerAlarmOnThisPhone() throws {
+        let model = makeModel(container: try AlarmRepository.makeContainer(inMemory: true))
+        #expect(model.naggingEnabled)
+        let quiet = AlarmDefinition(title: "Quiet", firstDue: WallTime(Date().addingTimeInterval(3600)))
+        model.save(quiet, nags: false)
+        #expect(model.noNagAlarms == [quiet.id])
+        #expect(model.pendingOps.last?.definition?.autoSnoozeOverride == nil)
+        model.delete(quiet.id)
+        #expect(model.noNagAlarms.isEmpty)
+    }
+
     @Test func notificationTargetsSurviveTheirTextForms() throws {
         let occurrence = AlarmDefinition(title: "x", firstDue: WallTime(year: 2026, month: 10, day: 20, hour: 9))
             .occurrence(at: WallTime(year: 2026, month: 10, day: 20, hour: 9))

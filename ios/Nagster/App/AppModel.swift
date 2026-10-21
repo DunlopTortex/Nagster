@@ -34,6 +34,19 @@ final class AppModel {
         didSet { defaults.set(pausedUntil, forKey: Keys.pausedUntil) }
     }
 
+    /// Whether unanswered alarms remind you again on this phone. Off, each alarm alerts once.
+    var naggingEnabled: Bool {
+        didSet {
+            defaults.set(naggingEnabled, forKey: Keys.naggingEnabled)
+            replanAlerts()
+        }
+    }
+
+    /// Alarms whose reminders are turned off on this phone (not synced: the PC keeps nagging).
+    private(set) var noNagAlarms: Set<UUID> {
+        didSet { defaults.set(noNagAlarms.map(\.uuidString), forKey: Keys.noNagAlarms) }
+    }
+
     /// The choices offered for how long an unanswered alarm waits before this phone reminds you again.
     static let nagIntervalChoices = ["1m", "2m", "5m", "10m", "15m", "30m", "1h"].compactMap(SnoozeDuration.init)
     static let defaultNagInterval = SnoozeDuration(amount: 10, unit: .minutes)
@@ -58,6 +71,8 @@ final class AppModel {
         static let pcAddress = "pcAddress"
         static let pausedUntil = "pausedUntil"
         static let nagInterval = "nagInterval"
+        static let naggingEnabled = "naggingEnabled"
+        static let noNagAlarms = "noNagAlarms"
         static let lastSynced = "lastSynced"
         static let deviceID = "deviceID"
     }
@@ -71,6 +86,8 @@ final class AppModel {
         pcAddress = defaults.string(forKey: Keys.pcAddress) ?? ""
         pausedUntil = defaults.object(forKey: Keys.pausedUntil) as? Date
         nagInterval = defaults.string(forKey: Keys.nagInterval).flatMap(SnoozeDuration.init) ?? Self.defaultNagInterval
+        naggingEnabled = defaults.object(forKey: Keys.naggingEnabled) as? Bool ?? true
+        noNagAlarms = Set((defaults.stringArray(forKey: Keys.noNagAlarms) ?? []).compactMap(UUID.init(uuidString:)))
         (state, pendingOps) = repository.load()
         syncStatus = client == nil ? .notSetUp : .idle(lastSynced: defaults.object(forKey: Keys.lastSynced) as? Date)
     }
@@ -136,7 +153,16 @@ final class AppModel {
 
     func save(_ definition: AlarmDefinition) { record(state.save(definition)) }
 
-    func delete(_ definitionID: UUID) { record(state.delete(definitionID)) }
+    /// Saves an alarm along with whether it nags on this phone.
+    func save(_ definition: AlarmDefinition, nags: Bool) {
+        if nags { noNagAlarms.remove(definition.id) } else { noNagAlarms.insert(definition.id) }
+        save(definition)
+    }
+
+    func delete(_ definitionID: UUID) {
+        noNagAlarms.remove(definitionID)
+        record(state.delete(definitionID))
+    }
 
     func pause(for length: TimeInterval?) {
         pausedUntil = length.map { Date().addingTimeInterval($0) } ?? .distantFuture
@@ -203,7 +229,8 @@ final class AppModel {
 
     /// Re-plans notifications and Important alarms from the current state.
     func refreshAlerts() async {
-        let plan = AlertPlanner.plan(state, now: now, pausedUntil: pausedUntil.map { WallTime($0) }, nagEvery: nagInterval)
+        let plan = AlertPlanner.plan(state, now: now, pausedUntil: pausedUntil.map { WallTime($0) }, nagEvery: nagInterval,
+                                     nagging: naggingEnabled, noNagAlarms: noNagAlarms)
         await notifications.schedule(plan, state: state, alarmKitRingsImportant: importantAlarms.isAuthorized)
         await importantAlarms.schedule(plan, state: state)
     }

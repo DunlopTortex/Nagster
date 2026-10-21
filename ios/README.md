@@ -12,7 +12,8 @@ device answers it on both.
 - **Ring on** each alarm: all devices, the PC only or the iPhone only.
 - Rings with notifications by default. Each has **Complete**, snooze buttons and **Dismiss**, and
   repeats until answered, every 10 minutes unless you change **Nag again after** in Settings, or for
-  one alarm in its editor.
+  one alarm in its editor. Nagging can be turned off for the whole app (**Nag until answered**) or
+  for one alarm, on the iPhone only.
 - **Important** alarms ring full screen through AlarmKit, like the Clock app, even in silent mode.
 - Pauses alerts on the phone for a while, independently of the PC.
 - Shares text with the PC's clipboard: send text to the PC, or copy what's on the PC's clipboard to

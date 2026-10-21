@@ -29,9 +29,13 @@ struct AlarmEditorView: View {
     @State private var deadlineAt: Date
     @State private var devices: AlarmDevices
     @State private var important: Bool
-    /// This alarm's own nag length; nil follows Settings.
-    @State private var nagAfter: SnoozeDuration?
+    @State private var nagChoice: NagChoice
     @State private var problem: String?
+
+    /// How this alarm nags: as Settings says, not at all (this iPhone only), or at its own length (synced with the PC).
+    enum NagChoice: Hashable {
+        case standard, off, every(SnoozeDuration)
+    }
 
     enum Ending: String, CaseIterable, Identifiable {
         case never = "Never", onDate = "On a date", afterCount = "After a number of times"
@@ -46,7 +50,8 @@ struct AlarmEditorView: View {
     private static let weekdayNames = Calendar.current.shortWeekdaySymbols // Sunday first, matching the PC.
     private static let nthNames = [1: "First", 2: "Second", 3: "Third", 4: "Fourth", -1: "Last"]
 
-    init(definition: AlarmDefinition?, nextRun: WallTime? = nil) {
+    /// - Parameter nagOff: Whether this alarm's reminders are turned off on this phone.
+    init(definition: AlarmDefinition?, nextRun: WallTime? = nil, nagOff: Bool = false) {
         existing = definition
         let rule = definition?.repeatRule ?? RepeatRule()
         let firstDue = (nextRun ?? definition?.firstDue)?.date() ?? Self.roundedUp(Date().addingTimeInterval(3600))
@@ -73,7 +78,7 @@ struct AlarmEditorView: View {
         _deadlineAt = State(initialValue: definition?.absoluteDeadline?.date() ?? firstDue.addingTimeInterval(3600))
         _devices = State(initialValue: definition?.devices ?? .all)
         _important = State(initialValue: definition?.important ?? false)
-        _nagAfter = State(initialValue: definition?.nagAfter)
+        _nagChoice = State(initialValue: nagOff ? .off : definition?.nagAfter.map(NagChoice.every) ?? .standard)
     }
 
     var body: some View {
@@ -131,15 +136,18 @@ struct AlarmEditorView: View {
                 }
 
                 Section {
-                    Picker("Nag again after", selection: $nagAfter) {
-                        Text("Default (\(model.nagInterval.label))").tag(SnoozeDuration?.none)
-                        ForEach(nagChoices, id: \.self) { Text($0.label).tag(Optional($0)) }
+                    Picker("Nag again after", selection: $nagChoice) {
+                        Text(model.naggingEnabled ? "Default (\(model.nagInterval.label))" : "Default (off)").tag(NagChoice.standard)
+                        Text("Off").tag(NagChoice.off)
+                        ForEach(nagChoices, id: \.self) { Text($0.label).tag(NagChoice.every($0)) }
                     }
                 } header: {
                     Text("Reminders")
                 } footer: {
-                    Text("How long this alarm waits before reminding you again if you don't answer. On the PC, it's how "
-                         + "long the alarm snoozes itself when nobody answers.")
+                    Text(model.naggingEnabled
+                         ? "How long this alarm waits before reminding you again if you don't answer. Off stops reminders "
+                           + "for it on this iPhone; the PC still nags."
+                         : "Nagging is turned off in Settings, so every alarm alerts once on this iPhone.")
                 }
 
                 Section {
@@ -242,7 +250,7 @@ struct AlarmEditorView: View {
     /// The usual lengths, plus this alarm's own if it was set to something else on the PC.
     private var nagChoices: [SnoozeDuration] {
         var choices = AppModel.nagIntervalChoices
-        if let nagAfter, !choices.contains(nagAfter) { choices.append(nagAfter) }
+        if case .every(let length) = nagChoice, !choices.contains(length) { choices.append(length) }
         return choices
     }
 
@@ -289,8 +297,12 @@ struct AlarmEditorView: View {
         definition.absoluteDeadline = deadline == .fixed ? WallTime(deadlineAt) : nil
         definition.devices = devices
         definition.important = important && devices != .desktop
-        definition.autoSnoozeOverride = nagAfter?.description
-        model.save(definition)
+        switch nagChoice {
+        case .standard: definition.autoSnoozeOverride = nil
+        case .every(let length): definition.autoSnoozeOverride = length.description
+        case .off: break // Phone-only; the length shared with the PC stays as it was.
+        }
+        model.save(definition, nags: nagChoice != .off)
         close()
     }
 

@@ -58,14 +58,18 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Toggle("Nag until answered", isOn: $model.naggingEnabled)
                     Picker("Nag again after", selection: $model.nagInterval) {
                         ForEach(AppModel.nagIntervalChoices, id: \.self) { Text($0.label).tag($0) }
                     }
+                    .disabled(!model.naggingEnabled)
                 } header: {
                     Text("Reminders")
                 } footer: {
-                    Text("How long an unanswered alarm waits before this iPhone reminds you again. The PC has its own "
-                         + "setting.")
+                    Text(model.naggingEnabled
+                         ? "How long an unanswered alarm waits before this iPhone reminds you again. Each alarm can have "
+                           + "its own length, or none. The PC has its own setting."
+                         : "Each alarm alerts once on this iPhone, then waits quietly. The PC still nags.")
                 }
 
                 Section("Pause alerts on this iPhone") {
