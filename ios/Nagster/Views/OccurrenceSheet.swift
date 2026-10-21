@@ -148,13 +148,15 @@ struct OccurrenceSheet: View {
             Text("Or ring again at")
                 .font(.rounded(.headline))
                 .foregroundStyle(Theme.ink)
-            HStack {
-                DatePicker("Ring again at", selection: $rescheduleTo, in: Date()...)
-                    .labelsHidden()
-                Spacer()
-                Button("Reschedule") { attempt { model.reschedule(occurrence, to: rescheduleTo) } }
-                    .buttonStyle(.bordered)
-                    .tint(Theme.violet)
+            DatePicker("Ring again at", selection: $rescheduleTo, in: Date()...)
+                .labelsHidden()
+            Button { attempt { model.reschedule(occurrence, to: rescheduleTo) } } label: {
+                Label("Reschedule", systemImage: "calendar.badge.clock")
+                    .font(.rounded(.body))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .foregroundStyle(Theme.ink)
+                    .background(Theme.violet.opacity(0.13), in: Capsule())
             }
         }
     }
