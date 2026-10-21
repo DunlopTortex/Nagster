@@ -294,10 +294,20 @@ struct TimelineRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Text(Formatting.time(occurrence.alertAt))
-                .font(.rounded(.title3).monospacedDigit())
-                .foregroundStyle(finished ? Theme.secondaryText : Theme.ink)
-                .frame(width: 72, alignment: .trailing)
+            // The clock on one line that never wraps, with AM/PM (on 12-hour iPhones) underneath.
+            let time = Formatting.clockAndPeriod(occurrence.alertAt)
+            VStack(alignment: .trailing, spacing: 0) {
+                Text(time.clock)
+                    .font(.rounded(.headline).monospacedDigit())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                if let period = time.period {
+                    Text(period)
+                        .font(.rounded(.caption, weight: .semibold))
+                }
+            }
+            .foregroundStyle(finished ? Theme.secondaryText : Theme.ink)
+            .frame(width: 72, alignment: .trailing)
 
             VStack(spacing: 0) {
                 marker

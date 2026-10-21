@@ -7,6 +7,17 @@ enum Formatting {
         time.date().formatted(date: .omitted, time: .shortened)
     }
 
+    /// A time split for a narrow column: the clock ("12:45") and, on 12-hour iPhones, the AM/PM marker on its own.
+    static func clockAndPeriod(_ time: WallTime) -> (clock: String, period: String?) {
+        let date = time.date()
+        let usesPeriod = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: .current)?.contains("a") ?? false
+        guard usesPeriod else { return (date.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits)), nil) }
+        let period = DateFormatter()
+        period.locale = .current
+        period.dateFormat = "a"
+        return (date.formatted(.dateTime.hour(.defaultDigits(amPM: .omitted)).minute(.twoDigits)), period.string(from: date))
+    }
+
     static func dayAndTime(_ time: WallTime) -> String {
         "\(day(time)) \(self.time(time))"
     }
