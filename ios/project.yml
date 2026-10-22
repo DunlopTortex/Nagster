@@ -1,0 +1,82 @@
+# XcodeGen spec: run `xcodegen generate` in this folder to create Nagster.xcodeproj (not committed).
+name: Nagster
+options:
+  bundleIdPrefix: com.dgutilities
+  deploymentTarget:
+    iOS: "26.1"
+  createIntermediateGroups: true
+  developmentLanguage: en-GB
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.7.3"
+    CURRENT_PROJECT_VERSION: "1"
+    # App code runs on the main actor unless it says otherwise (the Xcode 26 default for new apps).
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+
+packages:
+  NagsterCore:
+    path: NagsterCore
+
+targets:
+  Nagster:
+    type: application
+    platform: iOS
+    sources:
+      - path: Nagster
+      - path: Shared
+    dependencies:
+      - package: NagsterCore
+      - target: NagsterWidgets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dgutilities.nagster
+        TARGETED_DEVICE_FAMILY: "1"
+        # Generated keys plus the ones in Info.plist that build settings can't express.
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Nagster/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Nagster
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        CODE_SIGN_ENTITLEMENTS: Nagster/Nagster.entitlements
+        # Made by windows/tools/CreateIosIcon.ps1 from the same artwork as the desktop and web icons.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  NagsterWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: NagsterWidgets
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dgutilities.nagster.widgets
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: NagsterWidgets/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Nagster
+        SKIP_INSTALL: YES
+
+  NagsterTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: NagsterTests
+    dependencies:
+      - target: Nagster
+      - package: NagsterCore
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Nagster:
+    build:
+      targets:
+        Nagster: all
+    test:
+      targets:
+        - NagsterTests

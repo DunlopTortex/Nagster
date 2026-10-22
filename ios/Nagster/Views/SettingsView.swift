@@ -1,0 +1,148 @@
+import NagsterCore
+import SwiftUI
+import UIKit
+
+/// Linking to the PC, pausing this phone's alerts, and the permissions alarms need.
+struct SettingsView: View {
+    @Environment(AppModel.self) private var model
+    @Environment(\.dismiss) private var close
+    @State private var password = ""
+    @State private var signingIn = false
+    @State private var signInProblem: String?
+    @State private var notificationsAllowed = true
+    @AppStorage(Appearance.storageKey) private var appearance = Appearance.auto
+
+    private static let pauseChoices: [(String, TimeInterval?)] =
+        [("30 minutes", 1800), ("1 hour", 3600), ("4 hours", 14_400), ("1 day", 86_400), ("Until I resume", nil)]
+
+    var body: some View {
+        @Bindable var model = model
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("PC address, e.g. 192.168.1.20", text: $model.pcAddress)
+                        .textContentType(.URL)
+                        .keyboardType(.URL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    SecureField("Web access password", text: $password)
+                    Button {
+                        Task { await signIn() }
+                    } label: {
+                        if signingIn { ProgressView() } else { Text(SyncClient.isSignedIn ? "Sign in again" : "Sign in") }
+                    }
+                    .disabled(password.isEmpty || model.pcAddress.isEmpty || signingIn)
+                    if let signInProblem {
+                        Text(signInProblem).foregroundStyle(.red).font(.footnote)
+                    }
+                    Button("Sync now") { Task { await model.syncNow() } }
+                        .disabled(!SyncClient.isSignedIn)
+                    if SyncClient.isSignedIn {
+                        Button("Sign out", role: .destructive) { model.signOut() }
+                    }
+                    ForEach(model.rejected, id: \.self) { message in
+                        Label(message, systemImage: "exclamationmark.circle").font(.footnote).foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Your PC")
+                } footer: {
+                    Text("On the PC, turn on Settings → Web access in Nagster and set a password. Use the PC's address on your home "
+                         + "network, or its Tailscale IP address to sync from anywhere.")
+                }
+
+                Section("Appearance") {
+                    Picker("Theme", selection: $appearance) {
+                        ForEach(Appearance.allCases) { Text($0.label).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                Section {
+                    Toggle("Nag until answered", isOn: $model.naggingEnabled)
+                    Picker("Nag again after", selection: $model.nagInterval) {
+                        ForEach(AppModel.nagIntervalChoices, id: \.self) { Text($0.label).tag($0) }
+                    }
+                    .disabled(!model.naggingEnabled)
+                } header: {
+                    Text("Reminders")
+                } footer: {
+                    Text(model.naggingEnabled
+                         ? "How long an unanswered alarm waits before this iPhone reminds you again. Each alarm can have "
+                           + "its own length, or none. The PC has its own setting."
+                         : "Each alarm alerts once on this iPhone, then waits quietly. The PC still nags.")
+                }
+
+                Section {
+                    Toggle("Only during alarm hours", isOn: $model.alarmHours.enabled)
+                    if model.alarmHours.enabled {
+                        DatePicker("From", selection: time(\.startMinutes), displayedComponents: .hourAndMinute)
+                        DatePicker("To", selection: time(\.endMinutes), displayedComponents: .hourAndMinute)
+                    }
+                } header: {
+                    Text("Alarm hours")
+                } footer: {
+                    Text("iPhone-only alarms that fall outside these hours are snoozed until they start, unless their deadline "
+                         + "comes first. Alarms for all devices ring as usual; the PC has its own hours.")
+                }
+
+                Section("Pause alerts on this iPhone") {
+                    if model.isPaused, let until = model.pausedUntil {
+                        LabeledContent("Paused until", value: until == .distantFuture ? "you resume" : until.formatted(date: .abbreviated, time: .shortened))
+                        Button("Resume") { model.resume() }
+                    } else {
+                        ForEach(Self.pauseChoices, id: \.0) { choice in
+                            Button(choice.0) { model.pause(for: choice.1) }
+                        }
+                    }
+                }
+
+                Section {
+                    LabeledContent("Notifications", value: notificationsAllowed ? "Allowed" : "Off")
+                    LabeledContent("Important alarms", value: model.importantAlarmsAllowed ? "Allowed" : "Not allowed")
+                    if !notificationsAllowed || !model.importantAlarmsAllowed {
+                        Button("Open iPhone Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                        }
+                    }
+                } header: {
+                    Text("Permissions")
+                } footer: {
+                    Text("Without notifications this iPhone can't nag you. Important alarms ring as ordinary notifications until allowed.")
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(Theme.canvas)
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) { Button("Done") { close() } }
+            }
+            .task { notificationsAllowed = await model.notificationsAllowed() }
+        }
+    }
+
+    /// A time picker's value for one end of the alarm hours, stored as minutes after midnight.
+    private func time(_ end: WritableKeyPath<AlarmHours, Int>) -> Binding<Date> {
+        Binding(
+            get: {
+                let minutes = model.alarmHours[keyPath: end]
+                return Calendar.current.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: .now) ?? .now
+            },
+            set: { date in
+                let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+                model.alarmHours[keyPath: end] = (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
+            })
+    }
+
+    private func signIn() async {
+        signingIn = true
+        signInProblem = nil
+        defer { signingIn = false }
+        do {
+            try await model.signIn(password: password)
+            password = ""
+        } catch {
+            signInProblem = error.localizedDescription
+        }
+    }
+}

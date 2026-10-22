@@ -5,6 +5,9 @@ namespace Nagster;
 public enum RepeatKind { Once, Minutes, Hours, Daily, Weekly, Monthly, Yearly }
 public enum OccurrenceStatus { Pending, Active, Snoozed, Dismissed, Completed }
 
+/// <summary>Which devices sound an alarm. Every device still lists it; the others just don't ring.</summary>
+public enum AlarmDevices { All, Desktop, Phone }
+
 public sealed class RepeatRule
 {
     public RepeatKind Kind { get; set; } = RepeatKind.Once;
@@ -98,6 +101,17 @@ public sealed class AlarmDefinition
     /// <summary>Name of the connected calendar this alarm was imported from; null for alarms made in the app.</summary>
     public string? ImportedFrom { get; set; }
 
+    public AlarmDevices Devices { get; set; } = AlarmDevices.All;
+
+    /// <summary>On the iPhone, ring as a full-screen alarm (AlarmKit) rather than a notification. Ignored on the PC.</summary>
+    public bool Important { get; set; }
+
+    /// <summary>Value of <see cref="AlarmState.Revision"/> when this alarm last changed; drives sync.</summary>
+    public long Revision { get; set; }
+
+    [JsonIgnore]
+    public bool RingsOnDesktop => Devices != AlarmDevices.Phone;
+
     /// <summary>A deep copy with every setting, including the ones the web editor doesn't show.</summary>
     public AlarmDefinition Copy() =>
         System.Text.Json.JsonSerializer.Deserialize<AlarmDefinition>(System.Text.Json.JsonSerializer.Serialize(this))!;
@@ -114,13 +128,50 @@ public sealed class AlarmOccurrence
     public DateTime? RespondedAt { get; set; }
     public int SnoozeCount { get; set; }
     public string LastAction { get; set; } = "";
+
+    /// <summary>Value of <see cref="AlarmState.Revision"/> when this occurrence last changed; drives sync.</summary>
+    public long Revision { get; set; }
+
+    /// <summary>
+    /// True when the last change was made by the app rather than a person (generated, shown, automatically
+    /// snoozed, marked missed), so an action from the phone made before it can still take effect.
+    /// </summary>
+    public bool LastChangeAutomatic { get; set; }
+
+    [JsonIgnore]
+    public bool IsFinished => Status is OccurrenceStatus.Completed or OccurrenceStatus.Dismissed;
+
+    /// <summary>
+    /// Where a snooze length is counted from: the alert time if it is still to come, otherwise now, so snoozing
+    /// an alarm that hasn't gone off yet pushes it later rather than pulling it earlier.
+    /// </summary>
+    public DateTime SnoozeStart(DateTime now) => AlertAt > now ? AlertAt : now;
+}
+
+/// <summary>Records that an alarm or occurrence was deleted, so the phone deletes its copy at the next sync.</summary>
+public sealed class Tombstone
+{
+    public const string AlarmKind = "Alarm";
+    public const string OccurrenceKind = "Occurrence";
+
+    public Guid Id { get; set; }
+    public string Kind { get; set; } = AlarmKind;
+    public long Revision { get; set; }
+    public DateTime DeletedAt { get; set; }
+}
+
+/// <summary>A sync action already applied, so one the phone resends after a dropped reply isn't applied twice.</summary>
+public sealed class AppliedOp
+{
+    public Guid Id { get; set; }
+    public DateTime AppliedAt { get; set; }
 }
 
 public sealed class AppSettings
 {
     public int ResponseSeconds { get; set; } = 30;
     /// <summary>Automatic snooze length such as "60m" or "1d".</summary>
-    public string AutoSnooze { get; set; } = "1h";
+    public string AutoSnooze { get; set; } = "10m";
 
     /// <summary>Reads the minutes-only value saved by older versions; never written back.</summary>
     [JsonPropertyName("AutoSnoozeMinutes"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -140,6 +191,8 @@ public sealed class AppSettings
     public int? AlarmVolumePercent { get; set; }
 
     public QuietHours QuietHours { get; set; } = new();
+
+    public AlarmHours AlarmHours { get; set; } = new();
 
     /// <summary>
     /// While set, no alarm goes off (no popups, sounds or automatic snoozes). Once this time passes the user is asked
@@ -174,6 +227,32 @@ public sealed class QuietHours
         if (!Enabled || Start == End) return false;
         var time = moment.TimeOfDay;
         return Start < End ? time >= Start && time < End : time >= Start || time < End;
+    }
+}
+
+/// <summary>
+/// The hours this PC rings alarms set to ring on the PC only. One that comes due outside them is snoozed until
+/// they next start, unless its deadline comes first. Alarms for all devices ignore them, so the phone (with its own
+/// hours) isn't held back. The hours may cross midnight; a start equal to the end means all day.
+/// </summary>
+public sealed class AlarmHours
+{
+    public bool Enabled { get; set; }
+    public TimeSpan Start { get; set; } = new(8, 0, 0);
+    public TimeSpan End { get; set; } = new(21, 0, 0);
+
+    public bool Contains(DateTime moment)
+    {
+        if (!Enabled || Start == End) return true;
+        var time = moment.TimeOfDay;
+        return Start < End ? time >= Start && time < End : time >= Start || time < End;
+    }
+
+    /// <summary>When the hours next start, at or after <paramref name="moment"/>: later the same day or the next.</summary>
+    public DateTime NextStart(DateTime moment)
+    {
+        var sameDay = moment.Date + Start;
+        return sameDay >= moment ? sameDay : sameDay.AddDays(1);
     }
 }
 
@@ -215,4 +294,14 @@ public sealed class AlarmState
 
     /// <summary>Calendar events already turned into alarms, so they are never imported twice.</summary>
     public List<Calendars.ImportedEvent> ImportedEvents { get; set; } = [];
+
+    /// <summary>Counter stamped on every changed alarm, occurrence and tombstone; the phone asks for changes since one.</summary>
+    public long Revision { get; set; }
+
+    public List<Tombstone> Deleted { get; set; } = [];
+
+    /// <summary>Newest revision among tombstones pruned so far; a phone that last synced before it needs everything again.</summary>
+    public long PrunedThrough { get; set; }
+
+    public List<AppliedOp> AppliedOps { get; set; } = [];
 }

@@ -8,7 +8,9 @@ namespace Nagster;
 
 public partial class MainWindow : Window
 {
-    private string _filter = "All";
+    private enum StatusFilter { All, Pending, Dismissed, Completed }
+
+    private StatusFilter _filter = StatusFilter.Pending;
     private AlarmEngine Engine => ((App)Application.Current).Engine;
 
     public MainWindow()
@@ -16,14 +18,29 @@ public partial class MainWindow : Window
         InitializeComponent();
         Engine.Changed += Refresh;
         Closed += (_, _) => Engine.Changed -= Refresh;
+        // Closing only hides the window, so put it back on Pending each time it is reopened.
+        IsVisibleChanged += (_, e) =>
+        {
+            if (e.NewValue is not true) return;
+            _filter = StatusFilter.Pending;
+            PendingFilter.IsChecked = true;
+            Refresh();
+        };
         Refresh();
     }
+
+    private bool Matches(AlarmOccurrence occurrence) => _filter switch
+    {
+        StatusFilter.Pending => !occurrence.IsFinished,
+        StatusFilter.Dismissed => occurrence.Status == OccurrenceStatus.Dismissed,
+        StatusFilter.Completed => occurrence.Status == OccurrenceStatus.Completed,
+        _ => true,
+    };
 
     public void Refresh()
     {
         if (!Dispatcher.CheckAccess()) { Dispatcher.Invoke(Refresh); return; }
-        var rows = Engine.State.Occurrences.Select(o => new AlarmRow(o, Engine.Definition(o)))
-            .Where(r => _filter == "All" || (_filter == "Pending" ? r.Status != OccurrenceStatus.Completed.ToString() : r.Status == OccurrenceStatus.Completed.ToString()))
+        var rows = Engine.State.Occurrences.Where(Matches).Select(o => new AlarmRow(o, Engine.Definition(o)))
             .Where(r => FilterDate.SelectedDate is null || r.Occurrence.ScheduledFor.Date == FilterDate.SelectedDate.Value.Date)
             .OrderBy(r => r.Occurrence.AlertAt).ToList();
         AlarmGrid.ItemsSource = rows;
@@ -34,9 +51,10 @@ public partial class MainWindow : Window
     private void New_Click(object sender, RoutedEventArgs e) => ((App)Application.Current).ShowNew();
     private void Quick_Click(object sender, RoutedEventArgs e) => ((App)Application.Current).ShowQuick();
     private void Settings_Click(object sender, RoutedEventArgs e) => ((App)Application.Current).ShowSettings();
-    private void All_Click(object sender, RoutedEventArgs e) { _filter = "All"; FilterDate.SelectedDate = null; MonthCalendar.SelectedDate = null; Refresh(); }
-    private void Pending_Click(object sender, RoutedEventArgs e) { _filter = "Pending"; Refresh(); }
-    private void Completed_Click(object sender, RoutedEventArgs e) { _filter = "Completed"; Refresh(); }
+    private void All_Click(object sender, RoutedEventArgs e) { _filter = StatusFilter.All; FilterDate.SelectedDate = null; MonthCalendar.SelectedDate = null; Refresh(); }
+    private void Pending_Click(object sender, RoutedEventArgs e) { _filter = StatusFilter.Pending; Refresh(); }
+    private void Dismissed_Click(object sender, RoutedEventArgs e) { _filter = StatusFilter.Dismissed; Refresh(); }
+    private void Completed_Click(object sender, RoutedEventArgs e) { _filter = StatusFilter.Completed; Refresh(); }
     private void FilterDate_Changed(object sender, SelectionChangedEventArgs e) => Refresh();
     private void MonthCalendar_Changed(object sender, SelectionChangedEventArgs e)
     {
@@ -98,6 +116,7 @@ public sealed class AlarmRow
     public AlarmDefinition Definition { get; }
     public string Title => Definition.Title;
     public string Type => Definition.IsEvent ? "Event" : "Alarm";
+    public bool PhoneOnly => Definition.Devices == AlarmDevices.Phone;
     public string DueText => Compact(Occurrence.ScheduledFor);
     public string EndText => Definition.IsEvent && Definition.EventEnd is DateTime end
         ? EndOf(Occurrence.ScheduledFor, Occurrence.ScheduledFor.Add(end - Definition.FirstDue)) : "—";

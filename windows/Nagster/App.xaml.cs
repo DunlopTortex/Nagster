@@ -10,7 +10,7 @@ using Forms = System.Windows.Forms;
 
 namespace Nagster;
 
-public partial class App : Application
+public partial class App : Application, Web.IAlarmActions
 {
     private const string PipeName = "Nagster.Activation";
     private Mutex? _mutex;
@@ -307,7 +307,7 @@ public partial class App : Application
         var corner = Engine.State.Settings.PopupCorner;
         var ordered = _popups.Values.OrderBy(p =>
             Engine.State.Occurrences.First(o => o.Id == p.OccurrenceId).Deadline ?? DateTime.MaxValue).ToList();
-        var overflow = Engine.State.Occurrences.Count(o => (o.Status is OccurrenceStatus.Pending or OccurrenceStatus.Snoozed) && o.AlertAt <= DateTime.Now);
+        var overflow = Engine.Ringing(DateTime.Now).Count(o => o.Status != OccurrenceStatus.Active);
         for (var i = 0; i < ordered.Count; i++)
         {
             var popup = ordered[i];
@@ -325,18 +325,18 @@ public partial class App : Application
     }
     public void Complete(AlarmOccurrence occurrence) { Engine.Complete(occurrence); ClosePopup(occurrence); }
     public void Dismiss(AlarmOccurrence occurrence) { Engine.Dismiss(occurrence); ClosePopup(occurrence); }
-    public bool TrySnooze(AlarmOccurrence occurrence, DateTime next, bool automatic, out string message)
+    public bool TrySnooze(AlarmOccurrence occurrence, DateTime next, bool automatic, out string message, bool replay = false)
     {
-        var accepted = Engine.TrySnooze(occurrence, next, automatic, out message);
+        var accepted = Engine.TrySnooze(occurrence, next, automatic, out message, replay);
         if (!accepted) return false;
         ClosePopup(occurrence);
         // An automatic snooze means nobody answered; tell the user's phone (at most once per alarm per day).
         if (automatic) _ = _notifier!.OnAutoSnoozedAsync(Engine.Definition(occurrence), occurrence, next);
         return true;
     }
-    public bool TryReschedule(AlarmOccurrence occurrence, DateTime next, out string message)
+    public bool TryReschedule(AlarmOccurrence occurrence, DateTime next, out string message, bool replay = false)
     {
-        var accepted = Engine.TryReschedule(occurrence, next, out message);
+        var accepted = Engine.TryReschedule(occurrence, next, out message, replay);
         if (accepted) ClosePopup(occurrence);
         return accepted;
     }

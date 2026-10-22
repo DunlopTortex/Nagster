@@ -191,6 +191,10 @@
           <option value="Hours">Every few hours</option><option value="Minutes">Every few minutes</option>
         </select></div>
       <div class="repeat-field" id="interval-field"><label for="interval" id="interval-label">Every</label><input id="interval" type="number" inputmode="numeric" min="1" max="999" value="1"></div>
+      <div><label for="devices">Ring on</label>
+        <select id="devices">
+          <option value="All">All devices</option><option value="Desktop">PC only</option><option value="Phone">iPhone only</option>
+        </select></div>
       <div class="full"><label for="description">Description (optional)</label><textarea id="description" maxlength="1000"></textarea></div>
     </div>
     <p class="error" id="editor-error" role="alert" hidden></p>
@@ -437,8 +441,10 @@ function openEditor(item = null, scope = null, details = null) {
     $("repeat").value = details.repeat;
     $("interval").value = details.interval;
     $("deadline").value = details.deadlineMinutes ?? "";
+    $("devices").value = details.devices;
   } else {
     $("when").value = localValue(new Date(Date.now() + 3600000));
+    $("devices").value = "All";
   }
   syncRepeatFields();
   $("editor").showModal();
@@ -588,7 +594,7 @@ $("editor-form").addEventListener("submit", async event => {
   const alarm = {
     title: $("title").value, description: $("description").value, when: $("when").value,
     repeat: $("repeat").value, interval: Number($("interval").value) || 1,
-    deadlineMinutes: deadline ? Number(deadline) : null
+    deadlineMinutes: deadline ? Number(deadline) : null, devices: $("devices").value
   };
   $("editor-save").disabled = true;
   try {

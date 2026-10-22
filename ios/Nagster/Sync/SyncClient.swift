@@ -1,0 +1,133 @@
+import Foundation
+import NagsterCore
+
+enum SyncError: LocalizedError, Equatable {
+    case notSetUp
+    case signInNeeded
+    case wrongPassword(String)
+    case unreachable(String)
+    case server(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .notSetUp: "Enter your PC's address in Settings."
+        case .signInNeeded: "Sign in to your PC again in Settings."
+        case .wrongPassword(let message), .server(let message): message
+        case .unreachable(let detail): "Couldn't reach your PC (\(detail)). Check it's on and on the same network or Tailscale."
+        }
+    }
+}
+
+/// What the PC's clipboard holds: its text, or nil with `hasOtherContent` when it holds something else (an image,
+/// files) or nothing.
+nonisolated struct PCClipboard: Decodable, Equatable, Sendable {
+    var text: String?
+    var hasOtherContent: Bool
+}
+
+/// Talks to Nagster on the PC through its web interface: signs in with the web password, then syncs and shares
+/// the clipboard.
+/// The PC requires the session cookie on every call and the X-DGNA header on every change (its CSRF guard).
+struct SyncClient {
+    static let sessionCookie = "dgna_session"
+    private static let sessionAccount = "pc-session"
+
+    var baseURL: URL
+    var session: URLSession = .shared
+
+    /// Reads an address as typed: "192.168.1.20", "192.168.1.20:5972" or "http://my-pc:5972".
+    static func baseURL(from text: String) -> URL? {
+        var trimmed = text.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return nil }
+        if !trimmed.contains("://") { trimmed = "http://" + trimmed }
+        guard var components = URLComponents(string: trimmed), components.host?.isEmpty == false else { return nil }
+        if components.port == nil { components.port = 5972 }
+        components.path = ""
+        return components.url
+    }
+
+    static var isSignedIn: Bool { Keychain.read(sessionAccount) != nil }
+
+    static func signOut() { Keychain.delete(sessionAccount) }
+
+    func signIn(password: String) async throws {
+        struct Login: Encodable { var password: String }
+        let (data, response) = try await send("api/login", body: try JSONEncoder().encode(Login(password: password)), signedIn: false)
+        guard response.statusCode == 204 else { throw SyncError.wrongPassword(Self.message(in: data) ?? "That password isn't right.") }
+        try storeSession(from: response)
+    }
+
+    func sync(_ request: SyncRequest) async throws -> SyncResponse {
+        let data = try await signedIn("api/sync", body: try JSONEncoder().encode(request))
+        do { return try JSONDecoder().decode(SyncResponse.self, from: data) } catch {
+            throw SyncError.server("The PC's reply couldn't be read; update Nagster on the PC or the phone.")
+        }
+    }
+
+    /// What's on the PC's clipboard.
+    func readClipboard() async throws -> PCClipboard {
+        let data = try await signedIn("api/clipboard", method: "GET")
+        do { return try JSONDecoder().decode(PCClipboard.self, from: data) } catch {
+            throw SyncError.server("The PC's clipboard reply couldn't be read; update Nagster on the PC.")
+        }
+    }
+
+    /// Puts `text` on the PC's clipboard.
+    func writeClipboard(_ text: String) async throws {
+        struct Clipboard: Encodable { var text: String }
+        _ = try await signedIn("api/clipboard", body: try JSONEncoder().encode(Clipboard(text: text)))
+    }
+
+    /// Sends a signed-in request and returns the reply's body, turning the PC's error replies into SyncErrors.
+    private func signedIn(_ path: String, method: String = "POST", body: Data? = nil) async throws -> Data {
+        let (data, response) = try await send(path, method: method, body: body, signedIn: true)
+        switch response.statusCode {
+        case 200...299:
+            try? storeSession(from: response) // The PC renews the session as it's used.
+            return data
+        case 401:
+            Self.signOut()
+            throw SyncError.signInNeeded
+        default:
+            throw SyncError.server(Self.message(in: data) ?? "The PC replied with an error (\(response.statusCode)).")
+        }
+    }
+
+    private func send(_ path: String, method: String = "POST", body: Data?, signedIn: Bool) async throws -> (Data, HTTPURLResponse) {
+        var request = URLRequest(url: baseURL.appending(path: path), timeoutInterval: 20)
+        request.httpMethod = method
+        request.httpShouldHandleCookies = false
+        request.setValue("1", forHTTPHeaderField: "X-DGNA")
+        if signedIn {
+            guard let token = Keychain.read(Self.sessionAccount) else { throw SyncError.signInNeeded }
+            request.setValue("\(Self.sessionCookie)=\(token)", forHTTPHeaderField: "Cookie")
+        }
+        if let body {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = body
+        }
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard let http = response as? HTTPURLResponse else { throw SyncError.unreachable("no reply") }
+            return (data, http)
+        } catch let error as URLError {
+            throw SyncError.unreachable(error.localizedDescription)
+        }
+    }
+
+    private func storeSession(from response: HTTPURLResponse) throws {
+        let headers = response.allHeaderFields.reduce(into: [String: String]()) { result, pair in
+            if let key = pair.key as? String, let value = pair.value as? String { result[key] = value }
+        }
+        let cookies = HTTPCookie.cookies(withResponseHeaderFields: headers, for: baseURL)
+        guard let token = cookies.first(where: { $0.name == Self.sessionCookie })?.value else {
+            throw SyncError.server("The PC didn't start a session.")
+        }
+        Keychain.write(token, for: Self.sessionAccount)
+    }
+
+    private static func message(in data: Data) -> String? {
+        struct Problem: Decodable { var error: String }
+        return try? JSONDecoder().decode(Problem.self, from: data).error
+    }
+}

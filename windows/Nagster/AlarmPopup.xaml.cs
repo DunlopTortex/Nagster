@@ -96,7 +96,7 @@ public partial class AlarmPopup : Window
             var item = new MenuItem { Header = duration.Label };
             item.Click += (_, _) =>
             {
-                if (!App.TrySnooze(_occurrence, duration.AddTo(DateTime.Now), false, out var message))
+                if (!App.TrySnooze(_occurrence, duration.AddTo(_occurrence.SnoozeStart(DateTime.Now)), false, out var message))
                     ShowWarning(message);
             };
             menu.Items.Add(item);

@@ -1,0 +1,41 @@
+{
+  "deviceId": "sample-iphone",
+  "sinceRevision": 4,
+  "ops": [
+    {
+      "opId": "2B1E5C1A-7D3F-4A8B-9C0D-1E2F3A4B5C6D",
+      "type": "snooze",
+      "baseRevision": 2,
+      "occurrenceId": "4D8F2C94-0D18-5097-AC64-76E3CFC0EA94",
+      "definitionId": "6F1C2A8E-4B7D-4E0F-9A3C-2D5E8F1B7C40",
+      "scheduledFor": "2026-10-20T09:00:00",
+      "until": "2026-10-20T09:15:00"
+    },
+    {
+      "opId": "8C7B6A59-4837-4261-A5F4-E3D2C1B0A998",
+      "type": "upsertAlarm",
+      "baseRevision": 0,
+      "definition": {
+        "id": "3F2E1D0C-BA98-4765-8321-0FEDCBA98765",
+        "title": "Call the dentist",
+        "description": "",
+        "isEvent": false,
+        "reminderMinutes": 0,
+        "firstDue": "2026-10-21T10:00:00",
+        "repeat": {
+          "kind": "Weekly",
+          "interval": 1,
+          "weekdays": 62,
+          "dayOfMonth": 0,
+          "nth": 0,
+          "nthWeekday": 0,
+          "useLastDayForShortMonths": true
+        },
+        "devices": "Phone",
+        "important": true,
+        "enabled": true,
+        "revision": 0
+      }
+    }
+  ]
+}
