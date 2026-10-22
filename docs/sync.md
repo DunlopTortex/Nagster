@@ -49,14 +49,17 @@ that choice stays on the phone, and the PC keeps nagging. Reminders stop at the 
 when its next occurrence comes due. iOS allows an app only 64 scheduled notifications, so the phone
 keeps the soonest 60 and tops them up each time it opens or syncs.
 
-Each notification has **Complete**, up to four snooze buttons (the first of the PC's snooze choices)
-and **Dismiss**. Press and hold, or swipe down, to see them all.
+Each notification has **Complete**, up to four snooze buttons (the first of the phone's snooze
+choices) and **Dismiss**. Press and hold, or swipe down, to see them all.
 
 Alarm hours are per device too. Each device snoozes its own single-device alarms (PC only, iPhone
 only) that fall outside its hours until they start, and the snooze syncs like any other. Alarms for
 all devices ignore both devices' hours, so one device's evening cut-off never silences the other.
 
 Pausing alerts is per device: pausing the PC doesn't silence the phone, or the other way round.
+
+Snooze choices start out shared: the phone uses the PC's list. Changing the list in the phone's
+Settings gives the phone its own, which isn't synced; **Use the PC's list** goes back to the PC's.
 
 ## How conflicts are settled
 
@@ -98,6 +101,7 @@ Details that keep the two apps in agreement:
   every few minutes or hours. Beyond that, and for alarms added on the phone before they sync, the
   phone works them out from the same repeat rules.
 - The PC's settings for snooze choices, automatic snooze and response time come with every reply.
+  The phone uses the snooze choices unless it has its own list.
 
 `shared/parity-cases.json` and the sample request and reply in `shared/` are checked by both apps'
 tests, so a change to the repeat rules, IDs or JSON on one side fails the other's tests.

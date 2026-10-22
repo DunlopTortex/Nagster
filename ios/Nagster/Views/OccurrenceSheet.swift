@@ -130,7 +130,7 @@ struct OccurrenceSheet: View {
                 .font(.rounded(.headline))
                 .foregroundStyle(Theme.ink)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 10)], spacing: 10) {
-                ForEach(model.state.settings.snoozeDurations, id: \.self) { duration in
+                ForEach(model.snoozeChoices, id: \.self) { duration in
                     Button { attempt { model.snooze(occurrence, for: duration) } } label: {
                         VStack(spacing: 2) {
                             Text("\(duration.amount)")

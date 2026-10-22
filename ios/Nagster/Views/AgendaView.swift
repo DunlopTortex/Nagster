@@ -138,7 +138,7 @@ struct AgendaView: View {
     @ViewBuilder
     private func quickActions(for occurrence: AlarmOccurrence) -> some View {
         Button("Complete", systemImage: "checkmark.circle") { model.complete(occurrence) }
-        if let first = model.state.settings.snoozeDurations.first {
+        if let first = model.snoozeChoices.first {
             Button("Snooze \(first.label)", systemImage: "zzz") { model.snooze(occurrence, for: first) }
         }
         Button("Dismiss", systemImage: "xmark.circle", role: .destructive) { model.dismiss(occurrence) }
@@ -211,7 +211,7 @@ private struct NowPanel: View {
                             .foregroundStyle(Theme.dialInk)
                             .background(.white, in: Capsule())
                     }
-                    if let first = model.state.settings.snoozeDurations.first {
+                    if let first = model.snoozeChoices.first {
                         Button { model.snooze(occurrence, for: first) } label: {
                             Label(first.label, systemImage: "zzz")
                                 .font(.rounded(.headline))

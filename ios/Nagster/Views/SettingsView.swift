@@ -72,6 +72,8 @@ struct SettingsView: View {
                          : "Each alarm alerts once on this iPhone, then waits quietly. The PC still nags.")
                 }
 
+                SnoozeChoicesSection()
+
                 Section {
                     Toggle("Only during alarm hours", isOn: $model.alarmHours.enabled)
                     if model.alarmHours.enabled {

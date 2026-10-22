@@ -62,6 +62,21 @@ struct AppModelTests {
         #expect(image.text == nil && image.hasOtherContent)
     }
 
+    @Test func snoozeChoicesCanBeThePhonesOwn() throws {
+        let container = try AlarmRepository.makeContainer(inMemory: true)
+        let defaults = try #require(UserDefaults(suiteName: "nagster-tests-\(UUID())"))
+        let model = AppModel(repository: AlarmRepository(container: container), defaults: defaults)
+        #expect(model.snoozeChoices == model.state.settings.snoozeDurations)
+
+        let own = ["10m", "2w"].compactMap(SnoozeDuration.init)
+        model.ownSnoozeChoices = own
+        #expect(model.snoozeChoices == own)
+        #expect(AppModel(repository: AlarmRepository(container: container), defaults: defaults).snoozeChoices == own)
+
+        model.ownSnoozeChoices = nil
+        #expect(AppModel(repository: AlarmRepository(container: container), defaults: defaults).ownSnoozeChoices == nil)
+    }
+
     @Test func pcAddressesAreReadAsTyped() {
         #expect(SyncClient.baseURL(from: "192.168.1.20")?.absoluteString == "http://192.168.1.20:5972")
         #expect(SyncClient.baseURL(from: " my-pc:6000 ")?.absoluteString == "http://my-pc:6000")
