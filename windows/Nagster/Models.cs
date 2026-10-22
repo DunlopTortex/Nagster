@@ -208,7 +208,7 @@ public sealed class AppSettings
     public double PopupOpacity { get; set; } = 0.94;
     public string PopupCorner { get; set; } = "BottomRight";
     public int MaxVisiblePopups { get; set; } = 3;
-    public string SnoozeChoices { get; set; } = "5m, 15m, 30m, 1h, 1d";
+    public string SnoozeChoices { get; set; } = "5m, 15m, 30m, 1h, 1d, 1w, 2w";
     public bool StartWithWindows { get; set; } = true;
 }
 

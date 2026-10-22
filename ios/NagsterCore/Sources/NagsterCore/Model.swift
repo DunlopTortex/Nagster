@@ -126,7 +126,7 @@ public struct PhoneSettings: Codable, Hashable, Sendable {
     public var autoSnooze: String
     public var responseSeconds: Int
 
-    public init(snoozeChoices: [String] = ["5m", "15m", "30m", "1h", "1d"], autoSnooze: String = "10m", responseSeconds: Int = 30) {
+    public init(snoozeChoices: [String] = ["5m", "15m", "30m", "1h", "1d", "1w", "2w"], autoSnooze: String = "10m", responseSeconds: Int = 30) {
         self.snoozeChoices = snoozeChoices
         self.autoSnooze = autoSnooze
         self.responseSeconds = responseSeconds
