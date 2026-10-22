@@ -96,7 +96,7 @@ public static class WebApi
             Ui(() => Act(alarms, id, occurrence =>
             {
                 if (!SnoozeDuration.TryParse(request.Duration, out var duration)) return "Choose how long to snooze for.";
-                return alarms.TrySnooze(occurrence, duration.AddTo(DateTime.Now), false, out var message) ? null : message;
+                return alarms.TrySnooze(occurrence, duration.AddTo(occurrence.SnoozeStart(DateTime.Now)), false, out var message) ? null : message;
             })));
 
         web.MapPost("/api/occurrences/{id:guid}/reschedule", (Guid id, RescheduleRequest request) =>

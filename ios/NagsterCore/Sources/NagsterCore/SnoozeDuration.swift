@@ -80,7 +80,10 @@ public struct SnoozeDuration: Hashable, Sendable, CustomStringConvertible {
     }
 
     /// Human-readable form for buttons, e.g. "1 day" or "15 minutes".
-    public var label: String { amount == 1 ? "1 \(unit.noun)" : "\(amount) \(unit.noun)s" }
+    public var label: String { "\(amount) \(unitLabel)" }
+
+    /// The unit alone, matching the amount, e.g. "day" for 1 or "minutes" for 15.
+    public var unitLabel: String { amount == 1 ? unit.noun : "\(unit.noun)s" }
 
     /// Canonical setting form, e.g. "15m" or "2mo".
     public var description: String { "\(amount)\(unit.suffix)" }

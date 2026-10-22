@@ -20,6 +20,9 @@ Check(SnoozeDuration.TryParseList("5, 0m") is null && SnoozeDuration.TryParseLis
       SnoozeDuration.TryParseList("-5m") is null && SnoozeDuration.TryParseList(" , ") is null, "invalid snooze choices rejected");
 Check(SnoozeDuration.TryParse("15", out var bare) && bare.ToString() == "15m" && bare.Label == "15 minutes" &&
       SnoozeDuration.TryParse("1mo", out var month) && month.Label == "1 month", "snooze choices normalise and label");
+Check(new AlarmOccurrence { AlertAt = snoozeStart }.SnoozeStart(snoozeStart.AddHours(1)) == snoozeStart.AddHours(1) &&
+      new AlarmOccurrence { AlertAt = snoozeStart.AddHours(1) }.SnoozeStart(snoozeStart) == snoozeStart.AddHours(1),
+      "snooze counts from the later of now and the alert time");
 
 var legacySettings = System.Text.Json.JsonSerializer.Deserialize<AppSettings>("{\"AutoSnoozeMinutes\":45}")!;
 var legacyAlarm = System.Text.Json.JsonSerializer.Deserialize<AlarmDefinition>("{\"AutoSnoozeMinutesOverride\":90}")!;

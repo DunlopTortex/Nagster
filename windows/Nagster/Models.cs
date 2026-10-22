@@ -140,6 +140,12 @@ public sealed class AlarmOccurrence
 
     [JsonIgnore]
     public bool IsFinished => Status is OccurrenceStatus.Completed or OccurrenceStatus.Dismissed;
+
+    /// <summary>
+    /// Where a snooze length is counted from: the alert time if it is still to come, otherwise now, so snoozing
+    /// an alarm that hasn't gone off yet pushes it later rather than pulling it earlier.
+    /// </summary>
+    public DateTime SnoozeStart(DateTime now) => AlertAt > now ? AlertAt : now;
 }
 
 /// <summary>Records that an alarm or occurrence was deleted, so the phone deletes its copy at the next sync.</summary>

@@ -25,5 +25,7 @@ struct SnoozeDurationTests {
         #expect(bare.description == "15m")
         #expect(bare.label == "15 minutes")
         #expect(SnoozeDuration("1mo")?.label == "1 month")
+        #expect(bare.unitLabel == "minutes")
+        #expect(SnoozeDuration("1d")?.unitLabel == "day")
     }
 }

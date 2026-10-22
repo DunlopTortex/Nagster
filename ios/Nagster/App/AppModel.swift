@@ -143,7 +143,8 @@ final class AppModel {
     /// - Returns: A reason if it couldn't be snoozed.
     @discardableResult
     func snooze(_ occurrence: AlarmOccurrence, for duration: SnoozeDuration) -> String? {
-        guard let until = AlarmState.snoozeTarget(duration, from: now, deadline: occurrence.deadline) else {
+        guard let until = AlarmState.snoozeTarget(duration, alertAt: occurrence.alertAt, now: now,
+                                                  deadline: occurrence.deadline) else {
             return "Its deadline has passed, so it can't be snoozed."
         }
         record(state.act(.snooze, on: occurrence, until: until, now: now), answering: occurrence.id)
@@ -201,7 +202,8 @@ final class AppModel {
     /// Records a snooze chosen on an Important alarm, whose countdown AlarmKit is already running.
     func snoozeFromAlarm(_ target: NotificationTarget, for duration: SnoozeDuration) {
         guard let occurrence = occurrence(for: target),
-              let until = AlarmState.snoozeTarget(duration, from: now, deadline: occurrence.deadline) else { return }
+              let until = AlarmState.snoozeTarget(duration, alertAt: occurrence.alertAt, now: now,
+                                                  deadline: occurrence.deadline) else { return }
         notifications.removeDelivered(for: occurrence.id)
         record(state.act(.snooze, on: occurrence, until: until, now: now))
     }

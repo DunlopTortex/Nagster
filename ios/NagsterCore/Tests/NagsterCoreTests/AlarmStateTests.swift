@@ -43,9 +43,19 @@ struct AlarmStateTests {
 
     @Test func snoozeStopsAtTheDeadline() {
         let fifteen = SnoozeDuration(amount: 15, unit: .minutes)
-        #expect(AlarmState.snoozeTarget(fifteen, from: nine, deadline: nil) == nine.adding(.minute, 15))
-        #expect(AlarmState.snoozeTarget(fifteen, from: nine, deadline: nine.adding(.minute, 10)) == nine.adding(.minute, 10))
-        #expect(AlarmState.snoozeTarget(fifteen, from: nine, deadline: nine) == nil)
+        #expect(AlarmState.snoozeTarget(fifteen, alertAt: nine, now: nine, deadline: nil) == nine.adding(.minute, 15))
+        #expect(AlarmState.snoozeTarget(fifteen, alertAt: nine, now: nine, deadline: nine.adding(.minute, 10))
+                == nine.adding(.minute, 10))
+        #expect(AlarmState.snoozeTarget(fifteen, alertAt: nine, now: nine, deadline: nine) == nil)
+    }
+
+    @Test func snoozeCountsFromTheLaterOfNowAndTheAlert() {
+        let fifteen = SnoozeDuration(amount: 15, unit: .minutes)
+        let ten = nine.adding(.hour, 1)
+        // Already gone off: from now.
+        #expect(AlarmState.snoozeTarget(fifteen, alertAt: nine, now: ten, deadline: nil) == ten.adding(.minute, 15))
+        // Not gone off yet: from when it would have.
+        #expect(AlarmState.snoozeTarget(fifteen, alertAt: ten, now: nine, deadline: nil) == ten.adding(.minute, 15))
     }
 
     @Test func actingOnAProjectedOccurrenceStoresIt() {

@@ -132,12 +132,16 @@ struct OccurrenceSheet: View {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 10)], spacing: 10) {
                 ForEach(model.state.settings.snoozeDurations, id: \.self) { duration in
                     Button { attempt { model.snooze(occurrence, for: duration) } } label: {
-                        Text(duration.label)
-                            .font(.rounded(.body))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .foregroundStyle(Theme.ink)
-                            .background(Theme.violet.opacity(0.13), in: Capsule())
+                        VStack(spacing: 2) {
+                            Text("\(duration.amount)")
+                                .font(.rounded(.title3, weight: .bold))
+                            Text(duration.unitLabel)
+                                .font(.rounded(.footnote, weight: .medium))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .foregroundStyle(Theme.ink)
+                        .background(Theme.violet.opacity(0.13), in: Capsule())
                     }
                 }
             }

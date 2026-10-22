@@ -46,7 +46,7 @@ public partial class AlarmCenterWindow : Window
     private void Snooze_Click(object sender, RoutedEventArgs e)
     {
         if (Selected is not { } o) return;
-        if (!App.TrySnooze(o, DateTime.Now.AddHours(1), false, out var message)) MessageDialog.Inform(this, "Cannot snooze", message);
+        if (!App.TrySnooze(o, o.SnoozeStart(DateTime.Now).AddHours(1), false, out var message)) MessageDialog.Inform(this, "Cannot snooze", message);
     }
     private void Reschedule_Click(object sender, RoutedEventArgs e)
     {

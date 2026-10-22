@@ -86,10 +86,13 @@ public struct AlarmState: Hashable, Sendable {
 
     // MARK: - The user's actions
 
-    /// The time a snooze of `duration` from `now` lands on, or nil if the deadline has already passed.
-    /// A snooze never goes past the deadline; one that would is shortened to end at it.
-    public static func snoozeTarget(_ duration: SnoozeDuration, from now: WallTime, deadline: WallTime?) -> WallTime? {
-        let target = duration.added(to: now)
+    /// The time a snooze of `duration` lands on, or nil if the deadline has already passed. It counts from
+    /// `alertAt` if that is still to come, otherwise from `now`, so snoozing an alarm that hasn't gone off yet
+    /// pushes it later rather than pulling it earlier. A snooze never goes past the deadline; one that would is
+    /// shortened to end at it.
+    public static func snoozeTarget(_ duration: SnoozeDuration, alertAt: WallTime, now: WallTime,
+                                    deadline: WallTime?) -> WallTime? {
+        let target = duration.added(to: max(alertAt, now))
         guard let deadline else { return target }
         if deadline <= now { return nil }
         return min(target, deadline)
