@@ -18,7 +18,6 @@ public sealed record WebState(AlarmItem[] Ringing, AlarmItem[] Upcoming, SnoozeO
 public sealed record LoginRequest(string? Password);
 public sealed record SnoozeRequest(string? Duration);
 public sealed record RescheduleRequest(string? When);
-public sealed record ClipboardRequest(string? Text);
 /// <summary>A new alarm from the web form; <see cref="Devices"/> names an <see cref="AlarmDevices"/> value, blank for all.</summary>
 public sealed record NewAlarmRequest(string? Title, string? Description, string? When, string? Repeat, int Interval = 1, int? DeadlineMinutes = null,
     string? Devices = null);
@@ -42,10 +41,7 @@ public static class WebApi
     public const string WholeSeries = "all";
     private const string ScopeProblem = "Choose whether to change just this one or the whole series.";
 
-    /// <summary>Longest text accepted for the clipboard (about a novel's worth).</summary>
-    public const int MaxClipboardLength = 1_000_000;
-
-    public static void Map(WebApplication web, App alarms, WebSessions sessions, ITextClipboard clipboard)
+    public static void Map(WebApplication web, App alarms, WebSessions sessions)
     {
         Task<T> Ui<T>(Func<T> action) => alarms.Dispatcher.InvokeAsync(action).Task;
 
@@ -106,22 +102,6 @@ public static class WebApi
                 return alarms.TryReschedule(occurrence, when, out var message) ? null : message;
             })));
 
-        web.MapGet("/api/clipboard", () => Ui(() =>
-        {
-            try { return Results.Json(clipboard.Read()); }
-            catch (System.Runtime.InteropServices.COMException) { return ClipboardBusy(); }
-        }));
-
-        web.MapPost("/api/clipboard", (ClipboardRequest request) => Ui(() =>
-        {
-            if (request.Text is null) return Results.Json(new { error = "Paste some text first." }, statusCode: 400);
-            if (request.Text.Length > MaxClipboardLength)
-                return Results.Json(new { error = "That's too much text to send in one go." }, statusCode: 400);
-            try { clipboard.Write(request.Text); }
-            catch (System.Runtime.InteropServices.COMException) { return ClipboardBusy(); }
-            return Results.NoContent();
-        }));
-
         web.MapPost("/api/alarms", (NewAlarmRequest request) => Ui(() =>
         {
             if (Validate(request, out var definition) is { } problem) return Problem(problem);
@@ -147,9 +127,6 @@ public static class WebApi
                 return Results.NoContent();
             })));
     }
-
-    private static IResult ClipboardBusy() =>
-        Results.Json(new { error = "Another program is using the PC's clipboard. Try again in a moment." }, statusCode: 503);
 
     public static WebState State(AlarmEngine engine)
     {

@@ -23,8 +23,8 @@ final class ImportantAlarmScheduler {
     }
 
     /// Makes AlarmKit's scheduled alarms match the plan's Important first alerts. Alarms already ringing or
-    /// counting down a snooze are left alone.
-    func schedule(_ plan: [PlannedAlert], state: AlarmState) async {
+    /// counting down a snooze are left alone. `snooze` is the length the alarm's Snooze button uses.
+    func schedule(_ plan: [PlannedAlert], state: AlarmState, snooze: SnoozeDuration?) async {
         guard isAuthorized else { return }
         let wanted = plan.filter(\.important)
         let existing = (try? manager.alarms) ?? []
@@ -32,7 +32,7 @@ final class ImportantAlarmScheduler {
             try? manager.cancel(id: alarm.id)
         }
         let busy = Set(existing.filter { $0.state != .scheduled }.map(\.id))
-        let snooze = state.settings.snoozeDurations.first ?? SnoozeDuration(amount: 10, unit: .minutes)
+        let snooze = snooze ?? SnoozeDuration(amount: 10, unit: .minutes)
         for alert in wanted where !busy.contains(alert.occurrence.id) {
             guard let definition = state.definitions[alert.occurrence.definitionId] else { continue }
             do {

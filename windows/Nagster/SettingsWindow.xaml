@@ -206,7 +206,7 @@
                                     <StackPanel>
                                         <TextBlock Text="Allow access from a web browser" />
                                         <TextBlock Style="{StaticResource Text.Hint}"
-                                                   Text="See and answer alarms, create new ones, and share this PC's clipboard from your phone or another computer. Anyone on your network can reach the sign-in page, so use a good password. The connection isn't encrypted: don't expose this port to the internet." />
+                                                   Text="See and answer alarms and create new ones from your phone or another computer, and sync the Nagster iPhone app. Anyone on your network can reach the sign-in page, so use a good password. The connection isn't encrypted: don't expose this port to the internet." />
                                     </StackPanel>
                                 </CheckBox>
                                 <StackPanel x:Name="WebFields" Margin="0,14,0,0">

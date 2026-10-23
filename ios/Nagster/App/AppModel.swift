@@ -68,6 +68,19 @@ final class AppModel {
         }
     }
 
+    /// This phone's own snooze choices, or nil to use the PC's (or the defaults, without a PC). Not synced:
+    /// the PC keeps its own list.
+    var ownSnoozeChoices: [SnoozeDuration]? {
+        didSet {
+            defaults.set(ownSnoozeChoices?.map(\.description), forKey: Keys.snoozeChoices)
+            notifications.registerActions(for: snoozeChoices)
+            replanAlerts()
+        }
+    }
+
+    /// The snooze lengths this phone offers, in order; the first is the quick snooze and the Important alarm's.
+    var snoozeChoices: [SnoozeDuration] { ownSnoozeChoices ?? state.settings.snoozeDurations }
+
     @ObservationIgnored private let repository: AlarmRepository
     @ObservationIgnored private let notifications: NotificationScheduler
     @ObservationIgnored private let importantAlarms: ImportantAlarmScheduler
@@ -82,6 +95,7 @@ final class AppModel {
         static let naggingEnabled = "naggingEnabled"
         static let noNagAlarms = "noNagAlarms"
         static let alarmHours = "alarmHours"
+        static let snoozeChoices = "snoozeChoices"
         static let lastSynced = "lastSynced"
         static let deviceID = "deviceID"
     }
@@ -99,6 +113,8 @@ final class AppModel {
         noNagAlarms = Set((defaults.stringArray(forKey: Keys.noNagAlarms) ?? []).compactMap(UUID.init(uuidString:)))
         alarmHours = defaults.data(forKey: Keys.alarmHours).flatMap { try? JSONDecoder().decode(AlarmHours.self, from: $0) }
             ?? AlarmHours()
+        ownSnoozeChoices = defaults.stringArray(forKey: Keys.snoozeChoices).map { $0.compactMap(SnoozeDuration.init) }
+            .flatMap { $0.isEmpty ? nil : $0 }
         (state, pendingOps) = repository.load()
         syncStatus = client == nil ? .notSetUp : .idle(lastSynced: defaults.object(forKey: Keys.lastSynced) as? Date)
     }
@@ -232,7 +248,7 @@ final class AppModel {
     /// Asks for notification permission (once) and sets up the notification buttons.
     func prepareAlerts() async {
         _ = await notifications.requestPermission()
-        notifications.registerActions(for: state.settings)
+        notifications.registerActions(for: snoozeChoices)
         replanAlerts()
     }
 
@@ -246,7 +262,7 @@ final class AppModel {
         let plan = AlertPlanner.plan(state, now: now, pausedUntil: pausedUntil.map { WallTime($0) }, nagEvery: nagInterval,
                                      nagging: naggingEnabled, noNagAlarms: noNagAlarms, alarmHours: alarmHours)
         await notifications.schedule(plan, state: state, alarmKitRingsImportant: importantAlarms.isAuthorized)
-        await importantAlarms.schedule(plan, state: state)
+        await importantAlarms.schedule(plan, state: state, snooze: snoozeChoices.first)
     }
 
     /// Run by iOS now and then in the background: sync, then top up the alerts for the days ahead.
@@ -266,18 +282,6 @@ final class AppModel {
     }
 
     func notificationsAllowed() async -> Bool { await notifications.isAllowed() }
-
-    // MARK: - The PC's clipboard
-
-    func readPCClipboard() async throws -> PCClipboard {
-        guard let client else { throw SyncError.notSetUp }
-        return try await client.readClipboard()
-    }
-
-    func sendToPCClipboard(_ text: String) async throws {
-        guard let client else { throw SyncError.notSetUp }
-        try await client.writeClipboard(text)
-    }
 
     // MARK: - Syncing
 
@@ -335,7 +339,7 @@ final class AppModel {
             state.merge(reply, unsent: pendingOps, now: now)
             rejected = reply.results.filter { !$0.applied }.compactMap(\.message)
             repository.save(state, ops: pendingOps)
-            notifications.registerActions(for: state.settings)
+            notifications.registerActions(for: snoozeChoices)
             replanAlerts()
             let synced = Date()
             defaults.set(synced, forKey: Keys.lastSynced)

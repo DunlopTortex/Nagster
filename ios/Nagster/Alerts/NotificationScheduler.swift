@@ -23,12 +23,12 @@ final class NotificationScheduler {
         return status == .authorized || status == .provisional
     }
 
-    /// Sets the notification buttons from the PC's snooze choices. Complete comes first, then the first snooze:
+    /// Sets the notification buttons from the phone's snooze choices. Complete comes first, then the first snooze:
     /// the only two iOS shows when space is short.
-    func registerActions(for settings: PhoneSettings) {
+    func registerActions(for snoozeChoices: [SnoozeDuration]) {
         var actions = [UNNotificationAction(identifier: Self.completeAction, title: "Complete",
                                             icon: UNNotificationActionIcon(systemImageName: "checkmark"))]
-        for duration in settings.snoozeDurations.prefix(Self.maxSnoozeButtons) {
+        for duration in snoozeChoices.prefix(Self.maxSnoozeButtons) {
             actions.append(UNNotificationAction(identifier: Self.snoozePrefix + duration.description, title: "Snooze \(duration.label)",
                                                 icon: UNNotificationActionIcon(systemImageName: "zzz")))
         }
