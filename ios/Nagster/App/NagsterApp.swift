@@ -31,17 +31,14 @@ struct NagsterApp: App {
 
     var body: some Scene {
         WindowGroup {
-            TabView {
-                Tab("Alarms", systemImage: "alarm") { AgendaView() }
-                Tab("Clipboard", systemImage: "doc.on.clipboard") { ClipboardView() }
-            }
-            .tint(Theme.violet)
-            .preferredColorScheme(appearance.colorScheme)
-            .environment(model)
-            .task {
-                await model.prepareAlerts()
-                await model.syncNow()
-            }
+            AgendaView()
+                .tint(Theme.violet)
+                .preferredColorScheme(appearance.colorScheme)
+                .environment(model)
+                .task {
+                    await model.prepareAlerts()
+                    await model.syncNow()
+                }
         }
         .onChange(of: scenePhase) {
             switch scenePhase {

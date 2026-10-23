@@ -13,15 +13,14 @@ namespace Nagster.Web;
 /// sign-in needs a session cookie, and every state-changing call must carry a custom header, which
 /// browsers won't send cross-site without a CORS preflight we never approve (CSRF protection).
 /// </summary>
-public sealed class WebServer(App alarms, IPAddress? bindAddress = null, ITextClipboard? clipboard = null, WebSessions? sessions = null)
+public sealed class WebServer(App alarms, IPAddress? bindAddress = null, WebSessions? sessions = null)
 {
-    /// <summary>Request size allowed for clipboard text; everything else keeps Kestrel's small default limit.</summary>
-    public const long ClipboardBodyLimit = 4 * 1024 * 1024;
-
-    /// <summary>Request size allowed for a sync, enough for the actions of a phone that was away for weeks.</summary>
+    /// <summary>
+    /// Request size allowed for a sync, enough for the actions of a phone that was away for weeks. Everything else
+    /// keeps Kestrel's small default limit.
+    /// </summary>
     public const long SyncBodyLimit = 1024 * 1024;
 
-    private readonly ITextClipboard _clipboard = clipboard ?? new SystemTextClipboard();
     // All interfaces by default so phones on the network can connect; tests bind to loopback instead.
     private readonly IPAddress _bindAddress = bindAddress ?? IPAddress.Any;
 
@@ -99,7 +98,7 @@ public sealed class WebServer(App alarms, IPAddress? bindAddress = null, ITextCl
         app.Use(SecurityHeaders);
         app.Use(ReportFailures);
         app.Use(RequireSessionForApi);
-        WebApi.Map(app, alarms, _sessions, _clipboard);
+        WebApi.Map(app, alarms, _sessions);
         return app;
     }
 
@@ -149,11 +148,10 @@ public sealed class WebServer(App alarms, IPAddress? bindAddress = null, ITextCl
         }
         // Using a device keeps it signed in: the session and the cookie's expiry are pushed back (at most daily).
         if (token is not null && path != "/api/logout" && _sessions.Touch(token)) SetSessionCookie(context, token);
-        // Only a signed-in request may send a large body, and only to set the clipboard or sync.
-        var isSync = path == "/api/sync";
-        if (HttpMethods.IsPost(context.Request.Method) && (isSync || path == "/api/clipboard") &&
+        // Only a signed-in request may send a large body, and only to sync.
+        if (HttpMethods.IsPost(context.Request.Method) && path == "/api/sync" &&
             context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } limit)
-            limit.MaxRequestBodySize = isSync ? SyncBodyLimit : ClipboardBodyLimit;
+            limit.MaxRequestBodySize = SyncBodyLimit;
         await next(context);
     }
 }

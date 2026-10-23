@@ -54,14 +54,6 @@ struct AppModelTests {
         #expect(NotificationTarget(userInfo: target.userInfo) == target)
     }
 
-    /// The PC's /api/clipboard reply, as WebApi serialises ClipboardContent.
-    @Test func readsThePCsClipboardReply() throws {
-        let text = try JSONDecoder().decode(PCClipboard.self, from: Data(#"{"text":"Hello\r\nPC","hasOtherContent":false}"#.utf8))
-        #expect(text == PCClipboard(text: "Hello\r\nPC", hasOtherContent: false))
-        let image = try JSONDecoder().decode(PCClipboard.self, from: Data(#"{"text":null,"hasOtherContent":true}"#.utf8))
-        #expect(image.text == nil && image.hasOtherContent)
-    }
-
     @Test func snoozeChoicesCanBeThePhonesOwn() throws {
         let container = try AlarmRepository.makeContainer(inMemory: true)
         let defaults = try #require(UserDefaults(suiteName: "nagster-tests-\(UUID())"))

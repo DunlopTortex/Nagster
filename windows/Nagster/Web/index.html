@@ -109,13 +109,6 @@
     dialog { top: 0; bottom: 0; width: calc(100% - 32px); max-width: 520px; height: fit-content; margin: auto; border-radius: 14px; }
     #choice { max-width: 400px; }
   }
-  /* Alarms | Clipboard tabs */
-  .tabs { display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin: -6px 0 6px; }
-  .tabs button { flex: 1; background: none; border: none; color: var(--subtle); border-radius: 7px; min-height: 38px; font-weight: 600; }
-  .tabs button[aria-selected="true"] { background: var(--accent-soft); color: var(--text); }
-  .clip { width: 100%; min-height: 150px; resize: vertical; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .clip[readonly] { background: rgba(255,255,255,.04); }
-  .clip-note { margin: 8px 2px 0; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -139,41 +132,11 @@
       <button class="link" id="logout" type="button">Sign out</button>
     </header>
 
-    <nav class="tabs" role="tablist" aria-label="Sections">
-      <button type="button" role="tab" id="tab-alarms" aria-controls="alarms-view" aria-selected="true">Alarms</button>
-      <button type="button" role="tab" id="tab-clipboard" aria-controls="clipboard-view" aria-selected="false">Clipboard</button>
-    </nav>
+    <h2>Going off now <span class="count" id="ringing-count">0</span></h2>
+    <div id="ringing"></div>
 
-    <div id="alarms-view" role="tabpanel" aria-labelledby="tab-alarms">
-      <h2>Going off now <span class="count" id="ringing-count">0</span></h2>
-      <div id="ringing"></div>
-
-      <h2>Next 7 days <span class="count" id="upcoming-count">0</span></h2>
-      <div id="upcoming"></div>
-    </div>
-
-    <div id="clipboard-view" role="tabpanel" aria-labelledby="tab-clipboard" hidden>
-      <h2>Send to the PC</h2>
-      <div class="card">
-        <textarea class="clip" id="clip-send" aria-label="Text to send to the PC clipboard"
-                  placeholder="Paste or type text here, then send it to the PC's clipboard."></textarea>
-        <div class="actions">
-          <button class="primary" type="button" id="clip-send-button">Send to PC</button>
-          <button type="button" id="clip-paste" hidden>Paste</button>
-          <button class="link" type="button" id="clip-clear">Clear</button>
-        </div>
-      </div>
-
-      <h2>On the PC clipboard</h2>
-      <div class="card">
-        <textarea class="clip" id="clip-current" readonly aria-label="Text on the PC clipboard"></textarea>
-        <p class="meta clip-note" id="clip-note"></p>
-        <div class="actions">
-          <button class="primary" type="button" id="clip-copy">Copy</button>
-          <button type="button" id="clip-refresh">Refresh</button>
-        </div>
-      </div>
-    </div>
+    <h2>Next 7 days <span class="count" id="upcoming-count">0</span></h2>
+    <div id="upcoming"></div>
   </div>
 </main>
 
@@ -277,73 +240,9 @@ function showApp() {
   $("toast").className = "";
   $("login").hidden = true;
   $("app").hidden = false;
-  showTab(location.hash === "#clipboard" ? "clipboard" : "alarms");
+  refresh();
   clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => { if (!document.hidden) refreshVisibleTab(); }, 5000);
-}
-
-let currentTab = "alarms";
-function refreshVisibleTab() { return currentTab === "clipboard" ? loadClipboard() : refresh(); }
-
-/** Switches between the Alarms and Clipboard tabs; the address remembers which, so it can be bookmarked. */
-function showTab(name) {
-  currentTab = name;
-  for (const tab of ["alarms", "clipboard"]) {
-    $(`tab-${tab}`).setAttribute("aria-selected", String(tab === name));
-    $(`${tab}-view`).hidden = tab !== name;
-  }
-  $("add").hidden = name !== "alarms";
-  history.replaceState(null, "", name === "clipboard" ? "#clipboard" : location.pathname);
-  refreshVisibleTab();
-}
-
-// ---- Clipboard ----
-let clipboardLoading = false;
-async function loadClipboard() {
-  // Leave the text alone while it's being selected or copied, so it doesn't change under the user.
-  if (clipboardLoading || document.activeElement === $("clip-current")) return;
-  clipboardLoading = true;
-  try {
-    const clipboard = await api("/api/clipboard");
-    const hasText = typeof clipboard.text === "string";
-    const text = hasText ? clipboard.text : "";
-    if ($("clip-current").value !== text) $("clip-current").value = text;
-    $("clip-copy").disabled = text.length === 0;
-    $("clip-note").textContent = hasText
-      ? `${text.length.toLocaleString()} character${text.length === 1 ? "" : "s"}`
-      : clipboard.hasOtherContent ? "The PC clipboard holds something other than text, such as an image or files."
-      : "The PC clipboard is empty.";
-    $("updated").textContent = "Clipboard checked " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
-  } catch (error) {
-    $("clip-note").textContent = error.message;
-  } finally { clipboardLoading = false; }
-}
-
-/**
- * Copies a text box's contents on this device. Browsers only offer the clipboard API on secure (HTTPS) pages, and
- * this page is plain HTTP on the local network, so otherwise the text is selected and copied the older way, which
- * iOS also accepts as long as the box is briefly editable.
- */
-async function copyOnThisDevice(area) {
-  if (window.isSecureContext && navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(area.value);
-    return true;
-  }
-  const wasReadOnly = area.readOnly;
-  area.readOnly = false;
-  area.contentEditable = "true";
-  const range = document.createRange();
-  range.selectNodeContents(area);
-  const selection = window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(range);
-  area.setSelectionRange(0, area.value.length);
-  const copied = document.execCommand("copy");
-  area.contentEditable = "false";
-  area.readOnly = wasReadOnly;
-  selection.removeAllRanges();
-  area.blur();
-  return copied;
+  refreshTimer = setInterval(() => { if (!document.hidden) refresh(); }, 5000);
 }
 
 async function act(item, action, body = {}) {
@@ -548,40 +447,6 @@ $("logout").addEventListener("click", async () => {
 });
 
 $("add").addEventListener("click", () => openEditor());
-$("tab-alarms").addEventListener("click", () => showTab("alarms"));
-$("tab-clipboard").addEventListener("click", () => showTab("clipboard"));
-
-$("clip-send-button").addEventListener("click", async () => {
-  const text = $("clip-send").value;
-  if (text.length === 0) { toast("Paste or type some text first.", true); return; }
-  $("clip-send-button").disabled = true;
-  try {
-    await api("/api/clipboard", { text });
-    toast("Sent to the PC clipboard");
-    loadClipboard();
-  } catch (error) { toast(error.message, true); }
-  finally { $("clip-send-button").disabled = false; }
-});
-
-const copyFailed = "Couldn't copy automatically. Select the text and copy it.";
-$("clip-copy").addEventListener("click", async () => {
-  try {
-    const copied = await copyOnThisDevice($("clip-current"));
-    toast(copied ? "Copied" : copyFailed, !copied);
-  } catch { toast(copyFailed, true); }
-});
-
-$("clip-refresh").addEventListener("click", () => { $("clip-current").blur(); loadClipboard(); });
-$("clip-clear").addEventListener("click", () => { $("clip-send").value = ""; $("clip-send").focus(); });
-
-// Reading this device's clipboard needs a secure (HTTPS) page; on plain HTTP people long-press the box and paste.
-if (window.isSecureContext && navigator.clipboard?.readText) {
-  $("clip-paste").hidden = false;
-  $("clip-paste").addEventListener("click", async () => {
-    try { $("clip-send").value = await navigator.clipboard.readText(); }
-    catch { toast("This browser didn't allow pasting. Long-press the box and choose Paste.", true); }
-  });
-}
 $("editor-cancel").addEventListener("click", () => $("editor").close());
 $("repeat").addEventListener("change", syncRepeatFields);
 closeOnBackdrop($("editor"));

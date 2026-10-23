@@ -20,8 +20,6 @@ device answers it on both.
   PC's list until you change it here.
 - **Alarm hours**: iPhone-only alarms that fall outside them are snoozed until they start. The PC has
   its own hours for PC-only alarms; alarms for all devices ignore both.
-- Shares text with the PC's clipboard: send text to the PC, or copy what's on the PC's clipboard to
-  the iPhone.
 
 Calendar import and Pushover stay on the PC; imported alarms reach the phone through sync. See
 [syncing](../docs/sync.md) for setup, how nagging works on the phone, and how conflicts are settled.
