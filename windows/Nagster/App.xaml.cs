@@ -2,6 +2,7 @@ using System.IO.Pipes;
 using System.Windows;
 using System.Windows.Threading;
 using Nagster.Calendars;
+using Nagster.Cloud;
 using Nagster.Notifications;
 using Nagster.Sounds;
 using Nagster.Web;
@@ -28,6 +29,10 @@ public partial class App : Application, Web.IAlarmActions
     private DispatcherTimer? _tick;
     private AutoSnoozeNotifier? _notifier;
     private WebServer? _web;
+    private static readonly System.Net.Http.HttpClient CloudHttp = new() { Timeout = TimeSpan.FromSeconds(60) };
+
+    /// <summary>Optional, end-to-end encrypted sync through Supabase; off until turned on in Settings.</summary>
+    public CloudSync Cloud { get; private set; } = null!;
     private CalendarImporter? _calendars;
 
     /// <summary>Reads connected calendars now instead of waiting for the next scheduled check.</summary>
@@ -74,10 +79,15 @@ public partial class App : Application, Web.IAlarmActions
             Engine = new AlarmEngine(new AlarmStore());
             _notifier = new AutoSnoozeNotifier(Engine);
             _web = new WebServer(this);
+            Cloud = new CloudSync(CloudHttp, this, action => Dispatcher.InvokeAsync(action).Task);
+            // Changes here go up a moment later, so an answered alarm stops ringing on the iPhone quickly.
+            Engine.Changed += Cloud.Nudge;
+            Cloud.Start();
             _calendars = new CalendarImporter(Engine);
             _ = ApplyWebAccess(passwordChanged: false);
             SetStartup(Engine.State.Settings.StartWithWindows);
             CreateTray();
+            RegisterLinks();
             _ = Task.Run(ListenForActivation);
             _tick = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _tick.Tick += (_, _) => ProcessDue();
@@ -110,8 +120,15 @@ public partial class App : Application, Web.IAlarmActions
         }
     }
 
-    private void HandleActivation(string argument)
+    private async void HandleActivation(string argument)
     {
+        // The cloud sync email confirmation link, opened in a browser on this PC.
+        if (argument.StartsWith("nagster:", StringComparison.OrdinalIgnoreCase))
+        {
+            var message = await Cloud.CompleteSignUpAsync(argument);
+            _tray?.ShowBalloonTip(8000, "Nagster cloud sync", message, Forms.ToolTipIcon.Info);
+            return;
+        }
         switch (argument.ToLowerInvariant())
         {
             case "-tray": break;
@@ -362,6 +379,19 @@ public partial class App : Application, Web.IAlarmActions
         timer.Start();
     }
 
+    /// <summary>
+    /// Registers nagster:// links for this Windows user, so the cloud sync confirmation link opens Nagster. A second
+    /// launch with the link hands it to this one, like any other argument.
+    /// </summary>
+    private static void RegisterLinks()
+    {
+        using var key = Registry.CurrentUser.CreateSubKey(@"Software\Classes\nagster");
+        key.SetValue("", "URL:Nagster");
+        key.SetValue("URL Protocol", "");
+        using var command = key.CreateSubKey(@"shell\open\command");
+        command.SetValue("", $"\"{Environment.ProcessPath}\" \"%1\"");
+    }
+
     public void SetStartup(bool enabled)
     {
         using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
@@ -374,6 +404,7 @@ public partial class App : Application, Web.IAlarmActions
     {
         _tick?.Stop();
         _calendars?.Stop();
+        if (Cloud is { } cloud) Task.Run(cloud.StopAsync).Wait(TimeSpan.FromSeconds(3));
         // Stopped off the UI thread: a request in flight may be waiting for this (blocked) thread.
         if (_web is { } web) Task.Run(web.StopAsync).Wait(TimeSpan.FromSeconds(3));
         foreach (var occurrenceId in _popups.Keys) _sound.Stop(occurrenceId);

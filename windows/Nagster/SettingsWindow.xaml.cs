@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Diagnostics;
 using System.Windows.Navigation;
+using Nagster.Cloud;
 using Nagster.Notifications;
 using Nagster.Sounds;
 using Nagster.Web;
@@ -40,6 +41,77 @@ public partial class SettingsWindow : Window
         LoadPushover();
         LoadWebAccess();
         UpdateCalendarSummary();
+        CloudPassphraseHint.Text = $"At least {CloudCrypto.MinimumPassphrase} characters; a few unrelated words work well. It never leaves your devices.";
+        ShowCloud();
+        var cloud = ((App)Application.Current).Cloud;
+        cloud.StatusChanged += ShowCloudSoon;
+        Closed += (_, _) => cloud.StatusChanged -= ShowCloudSoon;
+    }
+
+    private CloudSync Cloud => ((App)Application.Current).Cloud;
+
+    private void ShowCloudSoon() => Dispatcher.BeginInvoke(ShowCloud);
+
+    private void ShowCloud()
+    {
+        var on = Cloud.IsOn;
+        CloudOffPanel.Visibility = on ? Visibility.Collapsed : Visibility.Visible;
+        CloudOnPanel.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+        CloudAccountText.Text = on ? $"Syncing as {Cloud.Email}, end-to-end encrypted." : "";
+        CloudStatusText.Text = "Status: " + Cloud.Status;
+    }
+
+    private void CloudOwnProject_Changed(object sender, RoutedEventArgs e) =>
+        CloudOwnFields.Visibility = CloudOwnProject.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>Runs a cloud sync action with its buttons disabled; what it returns, or why it failed, goes under them.</summary>
+    private async Task CloudActionAsync(Func<Task<string?>> action)
+    {
+        CloudOffPanel.IsEnabled = CloudOnPanel.IsEnabled = false;
+        CloudStatusText.Text = "Working…";
+        string? message;
+        try { message = await action(); }
+        catch (Exception ex) when (ex is SupabaseException or CloudCryptoException or ArgumentException or System.IO.IOException)
+        {
+            message = ex.Message;
+        }
+        finally { CloudOffPanel.IsEnabled = CloudOnPanel.IsEnabled = true; }
+        ShowCloud();
+        if (message is not null) CloudStatusText.Text = message;
+    }
+
+    private Task TurnOnCloudAsync(bool createAccount) => CloudActionAsync(async () =>
+    {
+        // Nagster's own project, unless the user brings theirs.
+        var own = CloudOwnProject.IsChecked == true;
+        var url = own ? CloudUrl.Text : SupabaseClient.DefaultProjectUrl;
+        var key = own ? CloudKey.Text : SupabaseClient.DefaultPublishableKey;
+        if (SupabaseClient.NormalizeUrl(url) is null) return "Enter the project URL, e.g. https://abcd.supabase.co (HTTPS only).";
+        if (key.Trim().Length == 0) return "Enter the project's publishable key.";
+        if (CloudEmail.Text.Trim().Length == 0 || CloudPassword.Password.Length == 0) return "Enter your email and account password.";
+        if (CloudPassphrase.Password.Length == 0) return "Enter your sync passphrase.";
+        var message = await Cloud.TurnOnAsync(url, key, CloudEmail.Text, CloudPassword.Password, CloudPassphrase.Password,
+            CloudPassphraseAgain.Password, createAccount);
+        if (message is null) CloudPassword.Password = CloudPassphrase.Password = CloudPassphraseAgain.Password = "";
+        return message;
+    });
+
+    private async void CloudOn_Click(object sender, RoutedEventArgs e) => await TurnOnCloudAsync(createAccount: false);
+
+    private async void CloudCreate_Click(object sender, RoutedEventArgs e) => await TurnOnCloudAsync(createAccount: true);
+
+    private async void CloudSync_Click(object sender, RoutedEventArgs e) =>
+        await CloudActionAsync(async () => { await Cloud.SyncAsync(); return null; });
+
+    private async void CloudOff_Click(object sender, RoutedEventArgs e) =>
+        await CloudActionAsync(async () => { await Cloud.TurnOffAsync(deleteAccount: false); return null; });
+
+    private async void CloudDelete_Click(object sender, RoutedEventArgs e)
+    {
+        if (!MessageDialog.Confirm(this, "Delete your cloud sync account?",
+                "Your account, everything in the cloud and the encryption vault are deleted for good, and cloud sync turns off on " +
+                "all your devices. The alarms on this PC and on each device stay as they are.", "Delete", isDanger: true)) return;
+        await CloudActionAsync(async () => { await Cloud.TurnOffAsync(deleteAccount: true); return null; });
     }
 
     private void UpdateCalendarSummary()
