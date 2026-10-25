@@ -2,7 +2,8 @@
 
 The iPhone app keeps its alarms in step with Nagster on your PC. The PC holds the master copy; the
 phone syncs with it through the PC's web interface whenever it can reach it, and keeps working (and
-nagging) when it can't.
+nagging) when it can't. To stay in step from anywhere, with or without a PC, there's also
+[cloud sync](cloud-sync.md), end-to-end encrypted, which follows the same rules.
 
 ## Setting it up
 

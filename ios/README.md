@@ -22,7 +22,8 @@ device answers it on both.
   its own hours for PC-only alarms; alarms for all devices ignore both.
 
 Calendar import and Pushover stay on the PC; imported alarms reach the phone through sync. See
-[syncing](../docs/sync.md) for setup, how nagging works on the phone, and how conflicts are settled.
+[syncing](../docs/sync.md) for setup, how nagging works on the phone, and how conflicts are settled, and
+[cloud sync](../docs/cloud-sync.md) for syncing from anywhere, end-to-end encrypted, with or without a PC.
 
 ## Requirements
 

@@ -17,15 +17,22 @@ public static class SyncApi
 
     public static SyncResponse Handle(IAlarmActions alarms, SyncRequest request, DateTime now)
     {
+        var results = Apply(alarms, request.Ops ?? [], now);
+        return Changes(alarms.Engine, request.SinceRevision, now) with { Results = [.. results] };
+    }
+
+    /// <summary>Applies actions from another device with these rules, as one save; cloud sync uses it too.</summary>
+    public static List<SyncOpResult> Apply(IAlarmActions alarms, IEnumerable<SyncOp> ops, DateTime now)
+    {
         var engine = alarms.Engine;
         var results = new List<SyncOpResult>();
         using (engine.Batch())
         {
-            foreach (var op in request.Ops ?? [])
+            foreach (var op in ops)
                 results.Add(Apply(alarms, op, now));
         }
         engine.PruneSyncHistory(now);
-        return Changes(engine, request.SinceRevision, now) with { Results = [.. results] };
+        return results;
     }
 
     private static SyncOpResult Apply(IAlarmActions alarms, SyncOp op, DateTime now)
@@ -179,7 +186,7 @@ public static class SyncApi
         return new SyncResponse(state.Revision, full, definitions, occurrences, tombstones, Settings(state.Settings), []);
     }
 
-    private static SyncSettings Settings(AppSettings settings) => new(
+    public static SyncSettings Settings(AppSettings settings) => new(
         [.. (SnoozeDuration.TryParseList(settings.SnoozeChoices) ?? []).Select(d => d.ToString())],
         settings.AutoSnooze, settings.ResponseSeconds);
 

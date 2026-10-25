@@ -238,6 +238,73 @@
                             </StackPanel>
                         </Border>
 
+                        <TextBlock Style="{StaticResource Text.Section}" Text="Cloud sync" />
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Text.Hint}" TextWrapping="Wrap" Margin="0,0,0,12"
+                                           Text="Optional. Keeps this PC and your iPhones in step from anywhere, without being on the same network. Everything is encrypted on this PC with your sync passphrase before it's sent; the cloud only ever sees ciphertext, so nobody else can read your alarms, Nagster included. Forget the passphrase and the cloud copy can't be read by anyone; your alarms stay on your devices. While this PC is running, it's the one that applies changes from your iPhones." />
+                                <StackPanel x:Name="CloudOffPanel">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Email" Style="{StaticResource Text.Field}" />
+                                            <TextBox x:Name="CloudEmail" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Account password" Style="{StaticResource Text.Field}" />
+                                            <PasswordBox x:Name="CloudPassword" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Sync passphrase" Style="{StaticResource Text.Field}" />
+                                            <PasswordBox x:Name="CloudPassphrase" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Passphrase again (first device only)" Style="{StaticResource Text.Field}" />
+                                            <PasswordBox x:Name="CloudPassphraseAgain" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBlock x:Name="CloudPassphraseHint" Style="{StaticResource Text.Hint}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                                    <CheckBox x:Name="CloudOwnProject" Style="{StaticResource Toggle}" Margin="0,12,0,0"
+                                              Checked="CloudOwnProject_Changed" Unchecked="CloudOwnProject_Changed">
+                                        <TextBlock Text="Use my own Supabase project" />
+                                    </CheckBox>
+                                    <Grid x:Name="CloudOwnFields" Margin="0,10,0,0" Visibility="Collapsed">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="Project URL" Style="{StaticResource Text.Field}" />
+                                            <TextBox x:Name="CloudUrl" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Publishable key" Style="{StaticResource Text.Field}" />
+                                            <TextBox x:Name="CloudKey" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                        <Button Content="Create account" Click="CloudCreate_Click" />
+                                        <Button Content="Turn on" Style="{StaticResource Button.Accent}" Margin="8,0,0,0" Click="CloudOn_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel x:Name="CloudOnPanel">
+                                    <TextBlock x:Name="CloudAccountText" Style="{StaticResource Text.Label}" />
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                        <Button Content="Delete account…" Style="{StaticResource Button.Danger}" Click="CloudDelete_Click" />
+                                        <Button Content="Turn off" Margin="8,0,0,0" Click="CloudOff_Click" />
+                                        <Button Content="Sync now" Style="{StaticResource Button.Accent}" Margin="8,0,0,0" Click="CloudSync_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <TextBlock x:Name="CloudStatusText" Style="{StaticResource Text.Hint}" TextWrapping="Wrap" Margin="0,10,0,0" />
+                            </StackPanel>
+                        </Border>
+
                         <TextBlock Style="{StaticResource Text.Section}" Text="Alarm windows" />
                         <Border Style="{StaticResource Card}">
                             <StackPanel>

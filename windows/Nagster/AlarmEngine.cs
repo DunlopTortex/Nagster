@@ -513,6 +513,31 @@ public sealed class AlarmEngine
     }
 
     /// <summary>
+    /// Takes on an occurrence's state as another device's cloud sync left it (snoozed, answered, moved), so this PC
+    /// matches what everyone else already sees. One on this PC's screen stays Active while the cloud says waiting.
+    /// </summary>
+    public void AdoptState(AlarmOccurrence occurrence, OccurrenceStatus status, DateTime alertAt, DateTime? deadline, int snoozeCount,
+        string lastAction, bool automatic)
+    {
+        occurrence.Status = status == OccurrenceStatus.Pending && occurrence.Status == OccurrenceStatus.Active ? OccurrenceStatus.Active : status;
+        if (status is OccurrenceStatus.Completed or OccurrenceStatus.Dismissed) occurrence.RespondedAt ??= DateTime.Now;
+        occurrence.AlertAt = alertAt;
+        occurrence.Deadline = deadline;
+        occurrence.SnoozeCount = snoozeCount;
+        occurrence.LastAction = lastAction;
+        Stamp(occurrence, automatic);
+        Persist();
+    }
+
+    /// <summary>Removes an occurrence that hasn't gone off, which another device's edit to its alarm replaced.</summary>
+    public void RemoveOccurrence(Guid occurrenceId)
+    {
+        if (State.Occurrences.RemoveAll(o => o.Id == occurrenceId && o.Status is OccurrenceStatus.Pending or OccurrenceStatus.Snoozed) == 0) return;
+        AddTombstone(occurrenceId, Tombstone.OccurrenceKind);
+        Persist();
+    }
+
+    /// <summary>
     /// Forgets tombstones and applied-op records older than the phone could still need. A phone that last synced
     /// before the newest pruned tombstone is sent everything again.
     /// </summary>

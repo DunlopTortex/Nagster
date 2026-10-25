@@ -1,0 +1,15 @@
+{
+  "comment": "Cloud sync encryption, checked by both apps' tests. See docs/cloud-sync.md.",
+  "userId": "3f6b1c2e-9a4d-4e8b-b1f0-6c2d8e4a7b90",
+  "recordId": "9c1e4f2a-7b3d-4a6e-8f10-2b5c7d9e1a34",
+  "passphrase": "correct horse battery staple ✓",
+  "salt": "AAECAwQFBgcICQoLDA0ODw==",
+  "iterations": 600000,
+  "kek": "J2EbGIsiwLMBjuzqQuUkBCHGp+SPhIsJP2XRQHXD0n4=",
+  "dataKey": "ZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoM=",
+  "wrapNonce": "BwcHBwcHBwcHBwcH",
+  "wrappedKey": "AQcHBwcHBwcHBwcHB58zYudOytizKE6eLhg7YwpE1bJENo4ExdOoppZhQwEHX62n9iOuvpS0XAheEG//NA==",
+  "entryNonce": "CQkJCQkJCQkJCQkJ",
+  "plaintext": "{\"id\":\"9c1e4f2a-7b3d-4a6e-8f10-2b5c7d9e1a34\",\"title\":\"Take the bins out ✓\",\"firstDue\":\"2026-10-19T21:30:00\"}",
+  "payload": "AQkJCQkJCQkJCQkJCVI+v4r293PzPNv+FtOE14meEUqphEWcLb4DpnSLW2Dt44wGorSkSlcsbOmDJetJklYc0bOkGRhKDGAGWiazieJIIOIjwOjDj0vREazx5Q3SzyPtzDVHz7fT3Fb4dJbiTgkuBmHBkrR5Xgmi1Cgm1/1UiQ6VwBewC/w7rCe30XeCHjAN2KBdCFpIlh+FRVW3CWLqf/ugkvUxzgE5wILzCGBRHiIqwRssyQhDT3ODrSKmdVC+e8qvTA3+ThIs84D+025FRChhZPARBJBpXrV9r0ky9EsMbGn7nGJLhJiBLOBxKyILUTiylQNrrPieeAvYBGUIxVXbNLiqCGfmQhN9BeiHFWIkcygNl0hxSe4vd7te"
+}

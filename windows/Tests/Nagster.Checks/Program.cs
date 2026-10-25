@@ -103,6 +103,7 @@ try
 finally { if (File.Exists(noticePath)) File.Delete(noticePath); }
 
 SyncChecks.Run(Check);
+CloudChecks.Run(Check);
 
 // ---- Web editing ----
 var webPath = Path.Combine(Path.GetTempPath(), "Nagster-web-" + Guid.NewGuid() + ".db");
