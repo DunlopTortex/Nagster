@@ -286,7 +286,7 @@ public enum CloudApplier {
 }
 
 /// The iPhone's own settings, shared by every iPhone on the account (not the PC, which keeps its own): how it nags,
-/// its alarm hours and its snooze choices. Every field is optional, so a setting added later doesn't disturb an older
+/// its alarm hours, its snooze choices and its theme. Every field is optional, so a setting added later doesn't disturb an older
 /// app.
 public struct IPhoneSettings: Codable, Hashable, Sendable {
     public static let scope = "iphone"
@@ -298,21 +298,23 @@ public struct IPhoneSettings: Codable, Hashable, Sendable {
     public var alarmHours: AlarmHours?
     /// This phone's own snooze list; empty means it uses the PC's.
     public var snoozeChoices: [String]?
+    public var appearance: String?
 
     public init(nagInterval: String? = nil, naggingEnabled: Bool? = nil, noNagAlarms: [UUID]? = nil, alarmHours: AlarmHours? = nil,
-                snoozeChoices: [String]? = nil) {
+                snoozeChoices: [String]? = nil, appearance: String? = nil) {
         self.nagInterval = nagInterval
         self.naggingEnabled = naggingEnabled
         self.noNagAlarms = noNagAlarms.map { $0.sorted { $0.uuidString < $1.uuidString } }
         self.alarmHours = alarmHours
         self.snoozeChoices = snoozeChoices
+        self.appearance = appearance
     }
 
     /// These settings with every field `other` has taking its place.
     public func overlaid(with other: IPhoneSettings) -> IPhoneSettings {
         IPhoneSettings(nagInterval: other.nagInterval ?? nagInterval, naggingEnabled: other.naggingEnabled ?? naggingEnabled,
                        noNagAlarms: other.noNagAlarms ?? noNagAlarms, alarmHours: other.alarmHours ?? alarmHours,
-                       snoozeChoices: other.snoozeChoices ?? snoozeChoices)
+                       snoozeChoices: other.snoozeChoices ?? snoozeChoices, appearance: other.appearance ?? appearance)
     }
 
     public var digest: String {

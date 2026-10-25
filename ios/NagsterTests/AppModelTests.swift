@@ -7,7 +7,22 @@ import Testing
 @MainActor
 struct AppModelTests {
     private func makeModel(container: ModelContainer) -> AppModel {
-        AppModel(repository: AlarmRepository(container: container), defaults: UserDefaults(suiteName: "nagster-tests-\(UUID())")!)
+        AppModel(repository: AlarmRepository(container: container), defaults: UserDefaults(suiteName: "nagster-tests-\(UUID())")!,
+                 cloudStore: CloudStore(fileURL: FileManager.default.temporaryDirectory.appending(component: "cloud-\(UUID()).json"),
+                                        keychainPrefix: "test-\(UUID())"))
+    }
+
+    @Test func cloudSyncIsOffUntilTurnedOn() throws {
+        let model = makeModel(container: try AlarmRepository.makeContainer(inMemory: true))
+        #expect(!model.isCloudOn && model.cloudBook == nil)
+    }
+
+    @Test func supabaseAddressesAreReadAsTyped() {
+        #expect(CloudClient.projectURL(from: "abcd.supabase.co")?.absoluteString == "https://abcd.supabase.co")
+        #expect(CloudClient.projectURL(from: " https://abcd.supabase.co/ ")?.absoluteString == "https://abcd.supabase.co")
+        #expect(CloudClient.projectURL(from: "http://abcd.supabase.co") == nil) // never in the clear
+        #expect(CloudClient.projectURL(from: "https://abcd.supabase.co/rest/v1") == nil)
+        #expect(CloudClient.projectURL(from: CloudClient.defaultProjectURL)?.absoluteString == CloudClient.defaultProjectURL)
     }
 
     @Test func actionsAreSavedAndQueuedForThePC() throws {

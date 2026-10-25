@@ -39,6 +39,14 @@ struct NagsterApp: App {
                     await model.prepareAlerts()
                     await model.syncNow()
                 }
+                // The cloud sync email confirmation link comes back as nagster://auth-callback.
+                .onOpenURL { url in Task { await model.handleLink(url) } }
+                .alert("Cloud sync", isPresented: Binding(get: { model.cloudNotice != nil },
+                                                          set: { if !$0 { model.cloudNotice = nil } })) {
+                    Button("OK") { model.cloudNotice = nil }
+                } message: {
+                    Text(model.cloudNotice ?? "")
+                }
         }
         .onChange(of: scenePhase) {
             switch scenePhase {

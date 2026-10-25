@@ -22,6 +22,18 @@
 	</array>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<!-- nagster://auth-callback: the cloud sync email confirmation link opens the app. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.dgutilities.nagster</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>nagster</string>
+			</array>
+		</dict>
+	</array>
 	<!-- No encryption beyond what iOS provides (HTTPS, Keychain), so TestFlight doesn't ask for export compliance. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>

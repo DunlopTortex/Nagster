@@ -37,6 +37,8 @@ If the app is already running, a second invocation forwards its command to the r
   unless their deadline comes first.
 - Optional password-protected web interface (Settings → Web access) for answering and editing alarms
   from a phone or another computer on your network.
+- Optional cloud sync (Settings → Cloud sync) with your iPhones from anywhere, end-to-end encrypted with your
+  passphrase; while it runs, this PC applies the iPhones' changes. See [cloud sync](../docs/cloud-sync.md).
 - Sync with the [iPhone app](../ios/README.md) through the web interface. Each alarm can ring on all
   devices, the PC only or the iPhone only. See [syncing](../docs/sync.md).
 - SQLite storage at `%LOCALAPPDATA%\Nagster\alarms.db`. Data from DG Nagging Alarms, the app's

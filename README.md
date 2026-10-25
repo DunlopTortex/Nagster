@@ -21,6 +21,8 @@ snooze, dismiss or reschedule it.
   each day
 - Optional password-protected web interface for managing alarms from other devices on your network
 - Local SQLite storage, with no cloud account required
+- Optional [cloud sync](docs/cloud-sync.md), end-to-end encrypted with your passphrase, to stay in step with your
+  iPhones from anywhere
 
 See the [Windows README](windows/README.md) for installation, command-line options, build steps
 and current limits, and [calendar setup](windows/docs/calendar-setup.md) for connecting calendars.
@@ -29,11 +31,12 @@ The longer-term roadmap is in the [product plan](windows/PRODUCT_PLAN.md).
 ## iPhone app at a glance
 
 - The same alarms, synced with the PC over your home network or Tailscale; no cloud account
+- Or [cloud sync](docs/cloud-sync.md), end-to-end encrypted, from anywhere and with or without a PC
 - Each alarm can ring on all devices, the PC only or the iPhone only
 - Notifications with Complete, snooze and Dismiss buttons that keep nagging until answered
 - Optional Important alarms that ring full screen through AlarmKit
 
-See the [iPhone README](ios/README.md) and [syncing](docs/sync.md).
+See the [iPhone README](ios/README.md), [syncing](docs/sync.md) and [cloud sync](docs/cloud-sync.md).
 
 ## Quick build (Windows)
 

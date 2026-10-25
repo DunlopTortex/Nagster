@@ -55,12 +55,24 @@ public struct SyncTombstone: Codable, Hashable, Sendable {
     public var id: UUID
     public var kind: String
     public var revision: Int64
+
+    public init(id: UUID, kind: String, revision: Int64) {
+        self.id = id
+        self.kind = kind
+        self.revision = revision
+    }
 }
 
 public struct SyncOpResult: Codable, Hashable, Sendable {
     public var opId: UUID
     public var applied: Bool
     public var message: String?
+
+    public init(opId: UUID, applied: Bool, message: String? = nil) {
+        self.opId = opId
+        self.applied = applied
+        self.message = message
+    }
 }
 
 public struct SyncResponse: Codable, Hashable, Sendable {
@@ -72,4 +84,15 @@ public struct SyncResponse: Codable, Hashable, Sendable {
     public var tombstones: [SyncTombstone]
     public var settings: PhoneSettings
     public var results: [SyncOpResult]
+
+    public init(revision: Int64, full: Bool, definitions: [AlarmDefinition], occurrences: [AlarmOccurrence], tombstones: [SyncTombstone],
+                settings: PhoneSettings, results: [SyncOpResult]) {
+        self.revision = revision
+        self.full = full
+        self.definitions = definitions
+        self.occurrences = occurrences
+        self.tombstones = tombstones
+        self.settings = settings
+        self.results = results
+    }
 }
