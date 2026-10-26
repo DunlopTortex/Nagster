@@ -89,6 +89,8 @@ public partial class App : Application, Web.IAlarmActions
             CreateTray();
             RegisterLinks();
             _ = Task.Run(ListenForActivation);
+            // Lets other apps on this PC (e.g. the Vellina voice assistant) list, add and answer alarms.
+            _ = Task.Run(() => LocalApi.ServeAsync(this, Dispatcher));
             _tick = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _tick.Tick += (_, _) => ProcessDue();
             _tick.Start();
