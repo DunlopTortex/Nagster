@@ -1,14 +1,16 @@
 name: TestFlight
 
-# Builds, signs and uploads the iPhone app to TestFlight. Runs when a tag such as ios-v0.2.0 is pushed (that becomes
-# the version shown in TestFlight) or from the Actions tab. Signing is done by Xcode with the App Store Connect API
-# key, so no certificates or profiles are stored here. See ios/README.md for the one-off setup and secrets.
+# Builds, signs and uploads the iPhone app to TestFlight. Runs only when started by hand: Actions → TestFlight → Run
+# workflow, optionally with the version TestFlight should show (e.g. 0.2.0). Signing is done by Xcode with the App
+# Store Connect API key, so no certificates or profiles are stored here. See ios/README.md for the one-off setup and secrets.
 
 on:
-  push:
-    tags:
-      - "ios-v*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version TestFlight shows, e.g. 0.2.0 (leave blank to keep project.yml's)"
+        required: false
+        default: ""
 
 concurrency:
   group: testflight
@@ -55,10 +57,19 @@ jobs:
 
       - name: Prepare signing key and version
         if: steps.secrets.outputs.ready == 'true'
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
         run: |
           printf '%s' "$ASC_KEY" > "$RUNNER_TEMP/AuthKey.p8"
-          # A tag like ios-v0.2.0 sets the version; otherwise project.yml's stays.
-          if [[ "$GITHUB_REF_NAME" == ios-v* ]]; then
+          # The version typed into Run workflow sets it; run on a tag like ios-v0.2.0, the tag does; otherwise
+          # project.yml's stays.
+          if [[ -n "$VERSION_INPUT" ]]; then
+            if [[ ! "$VERSION_INPUT" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]]; then
+              echo "::error::The version must look like 0.2.0, not '$VERSION_INPUT'."
+              exit 1
+            fi
+            echo "VERSION_SETTING=MARKETING_VERSION=$VERSION_INPUT" >> "$GITHUB_ENV"
+          elif [[ "$GITHUB_REF_NAME" == ios-v* ]]; then
             echo "VERSION_SETTING=MARKETING_VERSION=${GITHUB_REF_NAME#ios-v}" >> "$GITHUB_ENV"
           else
             echo "VERSION_SETTING=" >> "$GITHUB_ENV"

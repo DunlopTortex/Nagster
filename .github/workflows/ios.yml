@@ -1,16 +1,7 @@
 name: iOS
 
+# Runs only when started by hand: Actions → iOS → Run workflow.
 on:
-  push:
-    paths:
-      - "ios/**"
-      - "shared/**"
-      - ".github/workflows/ios.yml"
-  pull_request:
-    paths:
-      - "ios/**"
-      - "shared/**"
-      - ".github/workflows/ios.yml"
   workflow_dispatch:
 
 concurrency:
