@@ -1,13 +1,10 @@
 name: TestFlight
 
-# Builds, signs and uploads the iPhone app to TestFlight. Runs when a tag such as ios-v0.2.0 is pushed (that becomes
-# the version shown in TestFlight) or from the Actions tab. Signing is done by Xcode with the App Store Connect API
+# Builds, signs and uploads the iPhone app to TestFlight. Runs only when started from the Actions tab; run on a tag
+# such as ios-v0.2.0 and that becomes the version shown in TestFlight. Signing is done by Xcode with the App Store Connect API
 # key, so no certificates or profiles are stored here. See ios/README.md for the one-off setup and secrets.
 
 on:
-  push:
-    tags:
-      - "ios-v*"
   workflow_dispatch:
 
 concurrency:
