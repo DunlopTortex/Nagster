@@ -53,9 +53,10 @@ keeps the soonest 60 and tops them up each time it opens or syncs.
 Each notification has **Complete**, up to four snooze buttons (the first of the phone's snooze
 choices) and **Dismiss**. Press and hold, or swipe down, to see them all.
 
-Alarm hours are per device too. Each device snoozes its own single-device alarms (PC only, iPhone
-only) that fall outside its hours until they start, and the snooze syncs like any other. Alarms for
-all devices ignore both devices' hours, so one device's evening cut-off never silences the other.
+Alarm hours are per device too. Outside its hours a device stays silent for every alarm that isn't
+Important: what comes due waits there and goes off when its hours start. Nothing is snoozed or
+synced, so one device's evening cut-off never holds back the other; answering on one still clears
+it from both.
 
 Pausing alerts is per device: pausing the PC doesn't silence the phone, or the other way round.
 

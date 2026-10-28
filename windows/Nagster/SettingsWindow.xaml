@@ -120,9 +120,9 @@
                                 <CheckBox x:Name="AlarmHoursEnabled" Style="{StaticResource Toggle}"
                                           Checked="AlarmHoursEnabled_Changed" Unchecked="AlarmHoursEnabled_Changed">
                                     <StackPanel>
-                                        <TextBlock Text="Only ring PC-only alarms during these hours" />
+                                        <TextBlock Text="Only ring alarms during these hours" />
                                         <TextBlock Style="{StaticResource Text.Hint}"
-                                                   Text="One that comes due outside them is snoozed until they next start, unless its deadline comes first. Alarms for all devices ring as usual; the iPhone has its own hours." />
+                                                   Text="Outside them nothing pops up or makes a sound unless the alarm is Important. Anything that comes due waits, and goes off when the hours next start. The iPhone has its own hours." />
                                     </StackPanel>
                                 </CheckBox>
                                 <StackPanel x:Name="AlarmHoursRow" Orientation="Horizontal" Margin="0,12,0,0">

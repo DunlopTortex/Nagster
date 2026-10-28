@@ -18,8 +18,8 @@ device answers it on both.
 - Pauses alerts on the phone for a while, independently of the PC.
 - **Snooze choices** can be changed in Settings, with or without a PC. With one, the phone uses the
   PC's list until you change it here.
-- **Alarm hours**: iPhone-only alarms that fall outside them are snoozed until they start. The PC has
-  its own hours for PC-only alarms; alarms for all devices ignore both.
+- **Alarm hours**: outside them the phone stays silent unless the alarm is Important; anything that
+  comes due waits and alerts when they start. The PC has its own hours.
 
 Calendar import and Pushover stay on the PC; imported alarms reach the phone through sync. See
 [syncing](../docs/sync.md) for setup, how nagging works on the phone, and how conflicts are settled, and

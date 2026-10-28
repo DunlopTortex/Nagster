@@ -295,7 +295,6 @@ final class AppModel {
 
     /// Re-plans notifications and Important alarms from the current state.
     func refreshAlerts() async {
-        holdOutsideAlarmHours()
         let plan = AlertPlanner.plan(state, now: now, pausedUntil: pausedUntil.map { WallTime($0) }, nagEvery: nagInterval,
                                      nagging: naggingEnabled, noNagAlarms: noNagAlarms, alarmHours: alarmHours)
         await notifications.schedule(plan, state: state, alarmKitRingsImportant: importantAlarms.isAuthorized)
@@ -343,16 +342,6 @@ final class AppModel {
     }
 
     /// Syncs a couple of seconds after the last change, so a burst of taps goes in one request.
-    /// Snoozes iPhone-only alarms that would ring outside the alarm hours until they start, as real snoozes the PC
-    /// hears about. Runs whenever alerts are planned, as the phone isn't awake to do it when the alarm comes due.
-    private func holdOutsideAlarmHours() {
-        let ops = state.holdOutsideAlarmHours(alarmHours, now: now)
-        guard !ops.isEmpty else { return }
-        pendingOps.append(contentsOf: ops)
-        repository.save(state, ops: pendingOps)
-        scheduleSync()
-    }
-
     private func scheduleSync() {
         syncTask?.cancel()
         syncTask = Task {
