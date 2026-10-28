@@ -303,6 +303,11 @@ public partial class App : Application, Web.IAlarmActions
             if (Engine.PauseExpired(now)) ShowPauseEnded(now);
             return;
         }
+        foreach (var held in Engine.HoldOutsideAlarmHours(now))
+        {
+            _sound.Stop(held.Id);
+            if (_popups.Remove(held.Id, out var popup)) { popup.Stop(); popup.Close(); }
+        }
         var ready = Engine.Ready(now);
         var fitsOnScreen = Math.Max(1, (int)((SystemParameters.WorkArea.Height - 24) / 302));
         var maximum = Math.Min(Math.Clamp(Engine.State.Settings.MaxVisiblePopups, 1, 5), fitsOnScreen);

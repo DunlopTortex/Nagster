@@ -30,8 +30,8 @@ public enum AlertPlanner {
     ///     length when nil.
     ///   - nagging: False turns reminders off for every alarm: each occurrence alerts once.
     ///   - noNagAlarms: Alarms whose reminders are turned off on this phone.
-    ///   - alarmHours: iPhone-only alarms only alert within these; a reminder that would fall outside waits for
-    ///     their start.
+    ///   - alarmHours: Alarms only alert within these, unless they're Important; an alert that would fall outside
+    ///     waits for their start.
     public static func plan(_ state: AlarmState, now: WallTime, pausedUntil: WallTime? = nil,
                             nagEvery: SnoozeDuration? = nil, nagging: Bool = true,
                             noNagAlarms: Set<UUID> = [], alarmHours: AlarmHours = AlarmHours()) -> [PlannedAlert] {
@@ -51,11 +51,11 @@ public enum AlertPlanner {
                 // An alarm's own nag length wins over the device's.
                 let nagStep = definition?.nagAfter ?? step
                 let lastNag = nagging && !noNagAlarms.contains(occurrence.definitionId) ? maxNags : 0
-                let keepsHours = definition?.devices == .phone
+                let keepsHours = !important
                 var fireAt = occurrence.alertAt
                 for nag in 0...lastNag {
                     if nag > 0 { fireAt = nagStep.added(to: fireAt) }
-                    // iPhone-only alarms wait for the alarm hours, then carry on nagging from their start.
+                    // Alarms that aren't Important wait for the alarm hours, then carry on nagging from their start.
                     if keepsHours && !alarmHours.contains(fireAt) { fireAt = alarmHours.nextStart(onOrAfter: fireAt) }
                     if let replacedAt, fireAt >= replacedAt { break }
                     if let deadline = occurrence.deadline, fireAt > deadline { break }

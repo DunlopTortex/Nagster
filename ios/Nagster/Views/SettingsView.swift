@@ -99,8 +99,8 @@ struct SettingsView: View {
                 } header: {
                     Text("Alarm hours")
                 } footer: {
-                    Text("iPhone-only alarms that fall outside these hours are snoozed until they start, unless their deadline "
-                         + "comes first. Alarms for all devices ring as usual; the PC has its own hours.")
+                    Text("Outside these hours this iPhone stays silent unless the alarm is Important. Anything that comes "
+                         + "due waits, and alerts when the hours start. The PC has its own hours.")
                 }
 
                 Section("Pause alerts on this iPhone") {

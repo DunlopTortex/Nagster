@@ -283,17 +283,25 @@ internal static class SyncChecks
         var start = engine.State.Settings.AlarmHours.NextStart(now);
         var pcOnly = new AlarmDefinition { Title = "PC only", FirstDue = now.AddMinutes(-1), Devices = AlarmDevices.Desktop };
         var everywhere = new AlarmDefinition { Title = "Everywhere", FirstDue = now.AddMinutes(-1) };
-        var urgent = new AlarmDefinition { Title = "Urgent", FirstDue = now.AddMinutes(-1), Devices = AlarmDevices.Desktop, DeadlineAfterMinutes = 30 };
+        var urgent = new AlarmDefinition { Title = "Urgent", FirstDue = now.AddMinutes(-1), DeadlineAfterMinutes = 30 };
+        var important = new AlarmDefinition { Title = "Important", FirstDue = now.AddMinutes(-1), Important = true };
         engine.Add(pcOnly);
         engine.Add(everywhere);
         engine.Add(urgent);
+        engine.Add(important);
         var ready = engine.Ready(now);
-        var held = engine.State.Occurrences.Single(o => o.DefinitionId == pcOnly.Id);
-        check(held.Status == OccurrenceStatus.Snoozed && held.AlertAt == start && held.LastAction.StartsWith(AlarmEngine.OutsideHoursPrefix) &&
-              ready.All(o => o.DefinitionId != pcOnly.Id),
-            "a PC-only alarm due outside alarm hours is snoozed until they start");
-        check(ready.Any(o => o.DefinitionId == everywhere.Id) && ready.Any(o => o.DefinitionId == urgent.Id),
-            "alarms for all devices, and ones whose deadline comes first, ring outside alarm hours");
+        check(ready.Select(o => o.DefinitionId).SequenceEqual(new[] { important.Id }) && engine.Ringing(now).All(o => o.DefinitionId == important.Id),
+            "outside alarm hours only Important alarms go off, whatever their devices or deadline");
+        var waiting = engine.State.Occurrences.Single(o => o.DefinitionId == everywhere.Id);
+        check(waiting.Status == OccurrenceStatus.Pending && waiting.AlertAt == waiting.ScheduledFor,
+            "an alarm held by the alarm hours is left unchanged, so the other device still follows its own hours");
+        check(engine.Ready(start).Any(o => o.DefinitionId == pcOnly.Id) && engine.Ready(start).Any(o => o.DefinitionId == everywhere.Id),
+            "held alarms go off when the alarm hours start");
+
+        engine.Activate(engine.Ready(start).First(o => o.DefinitionId == everywhere.Id));
+        var held = engine.HoldOutsideAlarmHours(start.AddHours(1));
+        check(held.Count == 1 && held[0].DefinitionId == everywhere.Id && held[0].Status == OccurrenceStatus.Pending,
+            "an alarm on screen when the alarm hours end goes back to waiting");
     }
 
     private static void CheckRekeyingOldOccurrences(Action<bool, string> check)

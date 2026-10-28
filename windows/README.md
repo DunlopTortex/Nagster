@@ -33,8 +33,8 @@ If the app is already running, a second invocation forwards its command to the r
 - Always-on-top semi-transparent popup stack with an active-alarm center for overflow.
 - Calendar import from Google, Microsoft 365, desktop Outlook and secret ICS links, with ignore
   rules and no duplicates. See [calendar setup](docs/calendar-setup.md).
-- Optional alarm hours: PC-only alarms that come due outside them are snoozed until they next start,
-  unless their deadline comes first.
+- Optional alarm hours: outside them nothing pops up or sounds unless the alarm is Important; anything
+  that comes due waits and goes off when they next start.
 - Optional password-protected web interface (Settings → Web access) for answering and editing alarms
   from a phone or another computer on your network.
 - Optional cloud sync (Settings → Cloud sync) with your iPhones from anywhere, end-to-end encrypted with your

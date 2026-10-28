@@ -296,10 +296,10 @@ public sealed class AlarmEngine
                 changed = true;
             }
         }
-        changed |= HoldOutsideAlarmHours(now);
         changed |= CollapseMissedRepeats(now);
         if (changed) Persist();
-        return State.Occurrences.Where(o => (o.Status is OccurrenceStatus.Pending or OccurrenceStatus.Snoozed) && o.AlertAt <= now && RingsHere(o))
+        return State.Occurrences.Where(o => (o.Status is OccurrenceStatus.Pending or OccurrenceStatus.Snoozed) && o.AlertAt <= now && RingsHere(o) &&
+                                            AllowedAt(o, now))
             .OrderBy(o => o.Deadline ?? DateTime.MaxValue).ThenBy(o => o.ScheduledFor).ToList();
     }
 
@@ -307,32 +307,28 @@ public sealed class AlarmEngine
     private bool RingsHere(AlarmOccurrence occurrence) =>
         State.Definitions.FirstOrDefault(d => d.Id == occurrence.DefinitionId)?.RingsOnDesktop ?? true;
 
-    /// <summary>Start of an occurrence's last action after it was moved to the start of the alarm hours.</summary>
-    public const string OutsideHoursPrefix = "Outside alarm hours";
+    /// <summary>
+    /// False while it's outside the alarm hours, unless the occurrence's alarm is Important. Like a pause, nothing is
+    /// changed: what came due waits, and goes off when the hours next start (only the latest of a repeating alarm).
+    /// </summary>
+    private bool AllowedAt(AlarmOccurrence occurrence, DateTime now) =>
+        State.Settings.AlarmHours.Contains(now) || State.Definitions.FirstOrDefault(d => d.Id == occurrence.DefinitionId)?.Important == true;
 
     /// <summary>
-    /// Snoozes PC-only alarms that come due outside the alarm hours until the hours next start, as an automatic snooze.
-    /// One whose deadline comes before then is left to ring, as a snooze may never pass a deadline.
+    /// Outside the alarm hours, puts alarms on screen that aren't Important back to waiting, as a pause does, so they
+    /// go off again when the hours start.
     /// </summary>
-    /// <returns>True if any occurrence was moved.</returns>
-    private bool HoldOutsideAlarmHours(DateTime now)
+    /// <returns>The occurrences put back, whose popups should close.</returns>
+    public IReadOnlyList<AlarmOccurrence> HoldOutsideAlarmHours(DateTime now)
     {
-        var hours = State.Settings.AlarmHours;
-        if (hours.Contains(now)) return false;
-        var until = hours.NextStart(now);
-        var changed = false;
-        foreach (var occurrence in State.Occurrences.Where(o => (o.Status is OccurrenceStatus.Pending or OccurrenceStatus.Snoozed) && o.AlertAt <= now))
+        var held = State.Occurrences.Where(o => o.Status == OccurrenceStatus.Active && !AllowedAt(o, now)).ToList();
+        foreach (var occurrence in held)
         {
-            if (State.Definitions.FirstOrDefault(d => d.Id == occurrence.DefinitionId)?.Devices != AlarmDevices.Desktop) continue;
-            if (occurrence.Deadline is DateTime deadline && until > deadline) continue;
-            occurrence.AlertAt = until;
-            occurrence.Status = OccurrenceStatus.Snoozed;
-            occurrence.SnoozeCount++;
-            occurrence.LastAction = $"{OutsideHoursPrefix}: snoozed until {until:g}";
+            occurrence.Status = OccurrenceStatus.Pending;
             Stamp(occurrence, automatic: true);
-            changed = true;
         }
-        return changed;
+        if (held.Count > 0) Persist();
+        return held;
     }
 
     /// <summary>Last action recorded on an occurrence skipped because a later one of the same alarm was also due.</summary>
@@ -401,11 +397,12 @@ public sealed class AlarmEngine
 
     /// <summary>
     /// Alarms going off now on this PC: on screen, or due but waiting for space on screen. Most urgent deadline
-    /// first. Phone-only alarms are left out.
+    /// first. Phone-only alarms are left out, and so is what waits for the alarm hours.
     /// </summary>
     public IReadOnlyList<AlarmOccurrence> Ringing(DateTime now) =>
         State.Occurrences.Where(o => o.Status == OccurrenceStatus.Active ||
-                                     ((o.Status is OccurrenceStatus.Pending or OccurrenceStatus.Snoozed) && o.AlertAt <= now && RingsHere(o)))
+                                     ((o.Status is OccurrenceStatus.Pending or OccurrenceStatus.Snoozed) && o.AlertAt <= now && RingsHere(o) &&
+                                      AllowedAt(o, now)))
             .OrderBy(o => o.Deadline ?? DateTime.MaxValue).ThenBy(o => o.AlertAt).ToList();
 
     /// <summary>Alarms that will alert after <paramref name="now"/> and within <paramref name="window"/>, soonest first.</summary>

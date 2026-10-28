@@ -20,19 +20,23 @@ struct AlarmHoursTests {
         #expect(daytime.nextStart(onOrAfter: day.adding(.hour, 19)) == day.adding(.day, 1).adding(.hour, 8))
     }
 
-    @Test func phoneOnlyAlarmsOutsideTheHoursAreSnoozedToTheStart() {
+    @Test func onlyImportantAlarmsAlertOutsideTheHours() {
         let now = day.adding(.hour, 17)
         let lateOnPhone = AlarmDefinition(title: "Phone", firstDue: day.adding(.hour, 20), devices: .phone)
         let lateEverywhere = AlarmDefinition(title: "Everywhere", firstDue: day.adding(.hour, 20))
-        let lateWithDeadline = AlarmDefinition(title: "Deadline", firstDue: day.adding(.hour, 20), deadlineAfterMinutes: 60,
-                                               devices: .phone)
+        let lateWithDeadline = AlarmDefinition(title: "Deadline", firstDue: day.adding(.hour, 20), deadlineAfterMinutes: 60)
+        let lateImportant = AlarmDefinition(title: "Important", firstDue: day.adding(.hour, 20), important: true)
         var state = AlarmState()
-        for definition in [lateOnPhone, lateEverywhere, lateWithDeadline] { state.definitions[definition.id] = definition }
-        let ops = state.holdOutsideAlarmHours(daytime, now: now)
+        for definition in [lateOnPhone, lateEverywhere, lateWithDeadline, lateImportant] { state.definitions[definition.id] = definition }
+        let plan = AlertPlanner.plan(state, now: now, nagging: false, alarmHours: daytime)
         let tomorrowMorning = day.adding(.day, 1).adding(.hour, 8)
-        #expect(ops.count == 1 && ops.first?.definitionId == lateOnPhone.id && ops.first?.until == tomorrowMorning)
-        #expect(state.occurrences[lateOnPhone.occurrence(at: day.adding(.hour, 20)).id]?.alertAt == tomorrowMorning)
-        #expect(state.holdOutsideAlarmHours(daytime, now: now).isEmpty)
+        func firstAlert(_ definition: AlarmDefinition) -> WallTime? {
+            plan.first { $0.occurrence.definitionId == definition.id && $0.nag == 0 }?.fireAt
+        }
+        #expect(firstAlert(lateOnPhone) == tomorrowMorning && firstAlert(lateEverywhere) == tomorrowMorning)
+        #expect(firstAlert(lateWithDeadline) == nil)
+        #expect(firstAlert(lateImportant) == day.adding(.hour, 20))
+        #expect(plan.allSatisfy { $0.occurrence.definitionId == lateImportant.id || daytime.contains($0.fireAt) })
     }
 
     @Test func remindersOutsideTheHoursWaitForTheStart() {
