@@ -15,6 +15,7 @@ public partial class AlarmPopup : Window
     private bool _autoAttempted;
     private bool _closed;
     private bool _editing;
+    private bool _silenced;
     private App App => (App)Application.Current;
 
     public AlarmPopup(AlarmOccurrence occurrence, AlarmDefinition definition, AppSettings settings)
@@ -26,12 +27,10 @@ public partial class AlarmPopup : Window
         UpdateQuietBadge();
         TypeText.Text = definition.IsEvent ? "EVENT REMINDER" : "ALARM";
         TypeGlyph.Text = definition.IsEvent ? "" : "";
-        TitleText.Text = definition.Title;
-        DescriptionText.Text = definition.Description;
+        ShowDetails(definition);
         DueText.Text = definition.IsEvent ? $"Starts {occurrence.ScheduledFor:f}" : $"Due {occurrence.ScheduledFor:f}";
         DeadlineText.Text = occurrence.Deadline is DateTime deadline ? $"Complete by {deadline:f}" : "";
         DeadlineRow.Visibility = occurrence.Deadline is null ? Visibility.Collapsed : Visibility.Visible;
-        DescriptionText.Visibility = string.IsNullOrWhiteSpace(definition.Description) ? Visibility.Collapsed : Visibility.Visible;
         // Matches Brush.Panel, with the user's chosen opacity.
         Fill.Background = new SolidColorBrush(Color.FromArgb((byte)(settings.PopupOpacity * 255), 0x20, 0x21, 0x27));
         _responseTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -61,9 +60,26 @@ public partial class AlarmPopup : Window
     }
     public void ShowWarning(string text) => StatusText.Text = text;
 
-    /// <summary>Shows whether this alarm is currently silenced; refreshed each second while it counts down.</summary>
-    private void UpdateQuietBadge() =>
-        QuietBadge.Visibility = _settings.QuietHours.Contains(DateTime.Now) ? Visibility.Visible : Visibility.Collapsed;
+    private void ShowDetails(AlarmDefinition definition)
+    {
+        TitleRun.Text = definition.Title;
+        DescriptionText.Text = definition.Description;
+        DescriptionText.Visibility = string.IsNullOrWhiteSpace(definition.Description) ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    /// <summary>
+    /// Shows whether this alarm is currently silenced, by the user or by quiet hours/days; refreshed each
+    /// second while it counts down.
+    /// </summary>
+    private void UpdateQuietBadge()
+    {
+        var now = DateTime.Now;
+        var quietDay = _settings.QuietDays.Contains(now);
+        QuietBadge.Visibility = _silenced || quietDay || _settings.QuietHours.Contains(now) ? Visibility.Visible : Visibility.Collapsed;
+        QuietBadgeText.Text = _silenced ? "Silenced" : quietDay ? "Quiet day" : "Quiet hours";
+        QuietBadge.ToolTip = _silenced ? "You opened this alarm, so its sound was stopped"
+            : "No sound during quiet hours or quiet days (see Settings)";
+    }
 
     private void ResponseTick(object? sender, EventArgs e)
     {
@@ -86,6 +102,25 @@ public partial class AlarmPopup : Window
     private void Complete_Click(object sender, RoutedEventArgs e) => App.Complete(_occurrence);
     private void Dismiss_Click(object sender, RoutedEventArgs e) => App.Dismiss(_occurrence);
     private void More_Click(object sender, RoutedEventArgs e) => App.ShowActive();
+
+    /// <summary>
+    /// Stops the alarm's sound for good and opens it in the editor. The popup stays up so the user can still
+    /// complete, snooze or dismiss it, and its countdown waits while the editor is open.
+    /// </summary>
+    private void Title_Click(object sender, RoutedEventArgs e)
+    {
+        App.Silence(_occurrence);
+        _silenced = true;
+        UpdateQuietBadge();
+        _editing = true;
+        PauseResponse();
+        App.ShowEdit(App.Engine.Definition(_occurrence), _occurrence);
+        _editing = false;
+        // The alarm may have been completed or deleted elsewhere (e.g. from the phone) while the editor was open.
+        if (_closed) return;
+        ShowDetails(App.Engine.Definition(_occurrence));
+        ResumeResponse();
+    }
     private void Snooze_Click(object sender, RoutedEventArgs e)
     {
         PauseResponse();

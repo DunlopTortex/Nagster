@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Alarm" Width="390" Height="290"
-        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ShowInTaskbar="False" Topmost="True"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" ShowInTaskbar="False" Topmost="True" ShowActivated="False"
         ResizeMode="NoResize" FontFamily="{StaticResource Font.Text}" Foreground="{DynamicResource Brush.Text}"
         UseLayoutRounding="True">
     <Window.Resources>
@@ -10,6 +10,19 @@
             <Setter Property="Padding" Value="4,6" />
             <Setter Property="Margin" Value="2,0" />
             <Setter Property="FontSize" Value="12.5" />
+        </Style>
+        <!-- The title reads as plain text until hovered, then shows it opens the alarm. -->
+        <Style x:Key="TitleLink" TargetType="Hyperlink">
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+            <Setter Property="TextDecorations" Value="{x:Null}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="ToolTip" Value="Open this alarm and stop its sound" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
+                    <Setter Property="TextDecorations" Value="Underline" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
     <Grid>
@@ -27,11 +40,11 @@
                         </StackPanel>
                     </Border>
                     <Border x:Name="QuietBadge" CornerRadius="10" Padding="8,3" HorizontalAlignment="Right" Visibility="Collapsed"
-                            Background="{DynamicResource Brush.Control}" ToolTip="No sound during quiet hours (see Settings)">
+                            Background="{DynamicResource Brush.Control}" ToolTip="No sound during quiet hours or quiet days (see Settings)">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE74F;" Style="{StaticResource Text.Glyph}" FontSize="11"
                                        Foreground="{DynamicResource Brush.SubtleText}" Margin="0,0,6,0" />
-                            <TextBlock Text="Quiet hours" FontSize="11" Foreground="{DynamicResource Brush.SubtleText}" />
+                            <TextBlock x:Name="QuietBadgeText" Text="Quiet hours" FontSize="11" Foreground="{DynamicResource Brush.SubtleText}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -51,8 +64,10 @@
                 </StackPanel>
 
                 <StackPanel Margin="0,10,0,8">
-                    <TextBlock x:Name="TitleText" FontFamily="{StaticResource Font.Display}" FontSize="19" FontWeight="SemiBold"
-                               TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="52" />
+                    <TextBlock FontFamily="{StaticResource Font.Display}" FontSize="19" FontWeight="SemiBold"
+                               TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="52">
+                        <Hyperlink Style="{StaticResource TitleLink}" Click="Title_Click"><Run x:Name="TitleRun" /></Hyperlink>
+                    </TextBlock>
                     <TextBlock x:Name="DescriptionText" Style="{StaticResource Text.Hint}" FontSize="12.5" MaxHeight="36"
                                TextTrimming="CharacterEllipsis" Margin="0,4,0,0" />
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">

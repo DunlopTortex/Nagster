@@ -152,8 +152,8 @@ public partial class App : Application, Web.IAlarmActions
         menu.Items.Add("Settings", null, (_, _) => Dispatcher.Invoke(ShowSettings));
         menu.Items.Add(new Forms.ToolStripSeparator());
         var pause = new Forms.ToolStripMenuItem("Pause alarms for");
-        foreach (var (label, length) in PauseChoices)
-            pause.DropDownItems.Add(label, null, (_, _) => Dispatcher.Invoke(() => PauseFor(length)));
+        foreach (var (label, until) in PauseChoices.All)
+            pause.DropDownItems.Add(label, null, (_, _) => Dispatcher.Invoke(() => PauseUntil(until(DateTime.Now))));
         menu.Items.Add(pause);
         _unpauseItem = new Forms.ToolStripMenuItem("Unpause", null, (_, _) => Dispatcher.Invoke(Unpause));
         menu.Items.Add(_unpauseItem);
@@ -165,17 +165,13 @@ public partial class App : Application, Web.IAlarmActions
         UpdatePauseState();
     }
 
-    /// <summary>Tray "Pause alarms for" choices; null pauses until Unpause is chosen.</summary>
-    private static readonly (string Label, TimeSpan? Length)[] PauseChoices =
-    [
-        ("30 minutes", TimeSpan.FromMinutes(30)), ("1 hour", TimeSpan.FromHours(1)), ("4 hours", TimeSpan.FromHours(4)),
-        ("1 day", TimeSpan.FromDays(1)), ("Forever", null)
-    ];
-
-    /// <summary>Pauses every alarm: popups on screen close and go quiet, and nothing new goes off until the pause ends.</summary>
-    public void PauseFor(TimeSpan? length)
+    /// <summary>
+    /// Pauses every alarm: popups on screen close and go quiet, and nothing new goes off until the pause ends.
+    /// DateTime.MaxValue pauses until Unpause is chosen.
+    /// </summary>
+    public void PauseUntil(DateTime until)
     {
-        Engine.Pause(length is TimeSpan span ? DateTime.Now.Add(span) : DateTime.MaxValue);
+        Engine.Pause(until);
         foreach (var (occurrenceId, popup) in _popups)
         {
             _sound.Stop(occurrenceId);
@@ -342,6 +338,8 @@ public partial class App : Application, Web.IAlarmActions
         if (_popups.Remove(occurrence.Id, out var popup)) { popup.Stop(); popup.Close(); }
         ProcessDue();
     }
+    /// <summary>Stops an alarm's sound while leaving its popup on screen.</summary>
+    public void Silence(AlarmOccurrence occurrence) => _sound.Stop(occurrence.Id);
     public void Complete(AlarmOccurrence occurrence) { Engine.Complete(occurrence); ClosePopup(occurrence); }
     public void Dismiss(AlarmOccurrence occurrence) { Engine.Dismiss(occurrence); ClosePopup(occurrence); }
     public bool TrySnooze(AlarmOccurrence occurrence, DateTime next, bool automatic, out string message, bool replay = false)

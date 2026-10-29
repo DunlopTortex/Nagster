@@ -34,6 +34,8 @@ public partial class SettingsWindow : Window
         QuietStart.SelectedTime = Settings.QuietHours.Start;
         QuietEnd.SelectedTime = Settings.QuietHours.End;
         QuietEnabled_Changed(this, new RoutedEventArgs());
+        var quietDays = QuietDayBoxes;
+        for (var i = 0; i < quietDays.Length; i++) quietDays[i].IsChecked = (Settings.QuietDays.Weekdays & (1 << i)) != 0;
         AlarmHoursEnabled.IsChecked = Settings.AlarmHours.Enabled;
         AlarmHoursStart.SelectedTime = Settings.AlarmHours.Start;
         AlarmHoursEnd.SelectedTime = Settings.AlarmHours.End;
@@ -49,6 +51,9 @@ public partial class SettingsWindow : Window
     }
 
     private CloudSync Cloud => ((App)Application.Current).Cloud;
+
+    /// <summary>The quiet day chips, Sunday first to match the QuietDays bits.</summary>
+    private System.Windows.Controls.CheckBox[] QuietDayBoxes => [QuietSun, QuietMon, QuietTue, QuietWed, QuietThu, QuietFri, QuietSat];
 
     private void ShowCloudSoon() => Dispatcher.BeginInvoke(ShowCloud);
 
@@ -305,6 +310,10 @@ public partial class SettingsWindow : Window
         Settings.SnoozeChoices = string.Join(", ", choices);
         Settings.DefaultSound = DefaultSound.Sound;
         Settings.QuietHours = new QuietHours { Enabled = QuietEnabled.IsChecked == true, Start = quietStart, End = quietEnd };
+        var quietDays = new QuietDays();
+        var quietDayBoxes = QuietDayBoxes;
+        for (var i = 0; i < quietDayBoxes.Length; i++) if (quietDayBoxes[i].IsChecked == true) quietDays.Weekdays |= 1 << i;
+        Settings.QuietDays = quietDays;
         Settings.AlarmHours = new AlarmHours { Enabled = AlarmHoursEnabled.IsChecked == true, Start = hoursStart, End = hoursEnd };
         Settings.Pushover = new PushoverSettings
         {
