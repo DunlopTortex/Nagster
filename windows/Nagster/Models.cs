@@ -192,6 +192,8 @@ public sealed class AppSettings
 
     public QuietHours QuietHours { get; set; } = new();
 
+    public QuietDays QuietDays { get; set; } = new();
+
     public AlarmHours AlarmHours { get; set; } = new();
 
     /// <summary>
@@ -228,6 +230,17 @@ public sealed class QuietHours
         var time = moment.TimeOfDay;
         return Start < End ? time >= Start && time < End : time >= Start || time < End;
     }
+}
+
+/// <summary>
+/// Whole days of the week when alarms make no sound (they still pop up), e.g. Saturday and Sunday.
+/// Kept on this PC only; no days chosen means none are quiet.
+/// </summary>
+public sealed class QuietDays
+{
+    public int Weekdays { get; set; } // Sunday = bit 0, as in RepeatRule.
+
+    public bool Contains(DateTime moment) => (Weekdays & (1 << (int)moment.DayOfWeek)) != 0;
 }
 
 /// <summary>

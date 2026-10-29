@@ -89,11 +89,7 @@ public static class WebApi
             Ui(() => Act(alarms, id, occurrence => { alarms.Dismiss(occurrence); return null; })));
 
         web.MapPost("/api/occurrences/{id:guid}/snooze", (Guid id, SnoozeRequest request) =>
-            Ui(() => Act(alarms, id, occurrence =>
-            {
-                if (!SnoozeDuration.TryParse(request.Duration, out var duration)) return "Choose how long to snooze for.";
-                return alarms.TrySnooze(occurrence, duration.AddTo(occurrence.SnoozeStart(DateTime.Now)), false, out var message) ? null : message;
-            })));
+            Ui(() => Act(alarms, id, occurrence => Snooze(alarms, occurrence, request.Duration))));
 
         web.MapPost("/api/occurrences/{id:guid}/reschedule", (Guid id, RescheduleRequest request) =>
             Ui(() => Act(alarms, id, occurrence =>
@@ -119,13 +115,7 @@ public static class WebApi
         // Dismisses one upcoming occurrence, or deletes a repeating alarm outright (as the desktop's Delete does).
         web.MapPost("/api/occurrences/{id:guid}/cancel", (Guid id, ScopeRequest request) =>
             Ui(() => Planned(alarms.Engine, id, occurrence =>
-            {
-                var definition = alarms.Engine.Definition(occurrence);
-                if (!IsRecurring(definition) || request.Scope == JustThisOne) alarms.Dismiss(occurrence);
-                else if (request.Scope == WholeSeries) alarms.DeleteDefinition(definition.Id);
-                else return Problem(ScopeProblem);
-                return Results.NoContent();
-            })));
+                Cancel(alarms, occurrence, request.Scope) is { } problem ? Problem(problem) : Results.NoContent())));
     }
 
     public static WebState State(AlarmEngine engine)
@@ -217,21 +207,52 @@ public static class WebApi
             _ => value.ToString("ddd d MMM", CultureInfo.CurrentCulture)
         };
 
+    public const string NotRinging = "That alarm isn't going off any more.";
+    public const string NotPlanned = "That alarm has already gone off or been changed.";
+
+    /// <summary>The occurrence with this ID if it's going off right now.</summary>
+    public static AlarmOccurrence? FindRinging(AlarmEngine engine, Guid id, DateTime now) =>
+        engine.Ringing(now).FirstOrDefault(o => o.Id == id);
+
+    /// <summary>The occurrence with this ID if it hasn't gone off yet (see <see cref="IsPlanned"/>).</summary>
+    public static AlarmOccurrence? FindPlanned(AlarmEngine engine, Guid id, DateTime now) =>
+        engine.State.Occurrences.FirstOrDefault(o => o.Id == id && IsPlanned(o, now));
+
+    /// <summary>Snoozes a ringing alarm for a duration such as "15m" or "1h".</summary>
+    /// <returns>A message describing the problem, or null once snoozed.</returns>
+    public static string? Snooze(IAlarmActions alarms, AlarmOccurrence occurrence, string? duration)
+    {
+        if (!SnoozeDuration.TryParse(duration, out var length)) return "Choose how long to snooze for.";
+        return alarms.TrySnooze(occurrence, length.AddTo(occurrence.SnoozeStart(DateTime.Now)), false, out var message) ? null : message;
+    }
+
+    /// <summary>
+    /// Dismisses one upcoming occurrence, or deletes a repeating alarm outright (as the desktop's Delete does).
+    /// <paramref name="scope"/> is <see cref="JustThisOne"/> or <see cref="WholeSeries"/>; only a repeating alarm needs it.
+    /// </summary>
+    /// <returns>A message describing the problem, or null once done.</returns>
+    public static string? Cancel(IAlarmActions alarms, AlarmOccurrence occurrence, string? scope)
+    {
+        var definition = alarms.Engine.Definition(occurrence);
+        if (!IsRecurring(definition) || scope == JustThisOne) alarms.Dismiss(occurrence);
+        else if (scope == WholeSeries) alarms.DeleteDefinition(definition.Id);
+        else return ScopeProblem;
+        return null;
+    }
+
     /// <summary>Applies an action to an alarm that is currently going off; returns 400 with a reason if it can't.</summary>
     private static IResult Act(App alarms, Guid id, Func<AlarmOccurrence, string?> action)
     {
-        var occurrence = alarms.Engine.Ringing(DateTime.Now).FirstOrDefault(o => o.Id == id);
-        if (occurrence is null) return Results.Json(new { error = "That alarm isn't going off any more." }, statusCode: 409);
+        var occurrence = FindRinging(alarms.Engine, id, DateTime.Now);
+        if (occurrence is null) return Results.Json(new { error = NotRinging }, statusCode: 409);
         return action(occurrence) is { } problem ? Problem(problem) : Results.NoContent();
     }
 
     /// <summary>Applies an action to an alarm that hasn't gone off yet; returns 409 if it has, or no longer exists.</summary>
     private static IResult Planned(AlarmEngine engine, Guid id, Func<AlarmOccurrence, IResult> action)
     {
-        var occurrence = engine.State.Occurrences.FirstOrDefault(o => o.Id == id && IsPlanned(o, DateTime.Now));
-        return occurrence is null
-            ? Results.Json(new { error = "That alarm has already gone off or been changed." }, statusCode: 409)
-            : action(occurrence);
+        var occurrence = FindPlanned(engine, id, DateTime.Now);
+        return occurrence is null ? Results.Json(new { error = NotPlanned }, statusCode: 409) : action(occurrence);
     }
 
     private static IResult Problem(string message) => Results.Json(new { error = message }, statusCode: 400);

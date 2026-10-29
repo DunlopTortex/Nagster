@@ -7,7 +7,7 @@ using Nagster.Web;
 internal static class SyncChecks
 {
     /// <summary>The engine on its own, standing in for the App (which also closes popups and stops sounds).</summary>
-    private sealed class EngineActions(AlarmEngine engine) : IAlarmActions
+    internal sealed class EngineActions(AlarmEngine engine) : IAlarmActions
     {
         public AlarmEngine Engine => engine;
         public void Complete(AlarmOccurrence occurrence) => engine.Complete(occurrence);
@@ -32,7 +32,7 @@ internal static class SyncChecks
         CheckWireFormat(check);
     }
 
-    private static void WithEngine(Action<AlarmEngine> body)
+    internal static void WithEngine(Action<AlarmEngine> body)
     {
         var path = Path.Combine(Path.GetTempPath(), "Nagster-sync-" + Guid.NewGuid() + ".db");
         try { body(new AlarmEngine(new AlarmStore(path))); }

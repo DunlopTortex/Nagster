@@ -39,6 +39,11 @@ If the app is already running, a second invocation forwards its command to the r
   from a phone or another computer on your network.
 - Optional cloud sync (Settings → Cloud sync) with your iPhones from anywhere, end-to-end encrypted with your
   passphrase; while it runs, this PC applies the iPhones' changes. See [cloud sync](../docs/cloud-sync.md).
+- Local API for other apps on this PC, such as the Vellina voice assistant, on the named pipe
+  `Nagster.Api`: send one JSON line such as `{"command":"create","title":"Call the dentist","when":"2026-10-26T15:30"}`
+  and get one JSON line back. Commands are `state`, `create`, `snooze`, `complete`, `dismiss` and `cancel`.
+  Only programs running as the same Windows user can connect, so it needs no password and isn't on the network.
+  See `Nagster/Web/LocalApi.cs`.
 - Sync with the [iPhone app](../ios/README.md) through the web interface. Each alarm can ring on all
   devices, the PC only or the iPhone only. See [syncing](../docs/sync.md).
 - SQLite storage at `%LOCALAPPDATA%\Nagster\alarms.db`. Data from DG Nagging Alarms, the app's

@@ -67,6 +67,25 @@ var savedQuiet = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(System
 Check(savedQuiet.QuietHours.Enabled && savedQuiet.QuietHours.Start == overnight.Start && savedQuiet.QuietHours.End == overnight.End &&
       SoundOptions.From(savedQuiet).IsQuietAt(At(2)) && !SoundOptions.From(new AppSettings()).IsQuietAt(At(2)),
     "quiet hours save, load and reach sound playback");
+var weekend = new QuietDays { Weekdays = 1 << (int)DayOfWeek.Saturday | 1 << (int)DayOfWeek.Sunday };
+var saturday = new DateTime(2026, 10, 17, 14, 0, 0);
+Check(weekend.Contains(saturday) && weekend.Contains(saturday.AddDays(1).Date) && !weekend.Contains(saturday.AddDays(2).Date) &&
+      !weekend.Contains(At(14)) && !new QuietDays().Contains(saturday), "quiet days silence whole chosen weekdays only");
+var savedDays = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(System.Text.Json.JsonSerializer.Serialize(new AppSettings { QuietDays = weekend }))!;
+Check(savedDays.QuietDays.Weekdays == weekend.Weekdays && SoundOptions.From(savedDays).IsQuietAt(saturday) &&
+      !SoundOptions.From(savedDays).IsQuietAt(At(14)) &&
+      System.Text.Json.JsonSerializer.Deserialize<AppSettings>("{}")!.QuietDays.Weekdays == 0,
+    "quiet days save, load, default to none and reach sound playback");
+
+DateTime PauseEnd(string label, DateTime now) => PauseChoices.All.Single(c => c.Label == label).Until(now);
+Check(PauseEnd("Tomorrow morning", At(23, 30)) == new DateTime(2026, 10, 17, 9, 0, 0) &&
+      PauseEnd("Tomorrow afternoon", At(8)) == new DateTime(2026, 10, 17, 12, 0, 0) &&
+      PauseEnd("30 minutes", At(8)) == At(8, 30) && PauseEnd("Forever", At(8)) == DateTime.MaxValue,
+    "pause choices end tomorrow morning, tomorrow afternoon or after a length");
+Check(PauseEnd("Monday", At(8)) == new DateTime(2026, 10, 19, 9, 0, 0) &&
+      PauseChoices.NextMonday(new DateTime(2026, 10, 18, 22, 0, 0)) == new DateTime(2026, 10, 19, 9, 0, 0) &&
+      PauseChoices.NextMonday(new DateTime(2026, 10, 19, 7, 0, 0)) == new DateTime(2026, 10, 26, 9, 0, 0),
+    "pausing until Monday ends at 9am on the coming Monday, a week on if it's Monday already");
 
 var protectedKey = SecretProtector.Protect("uQiRzpo4DXghDmr9QzzfQu27cmVRsG");
 Check(protectedKey.Length > 0 && !protectedKey.Contains("uQiRzpo4") &&
@@ -104,6 +123,7 @@ finally { if (File.Exists(noticePath)) File.Delete(noticePath); }
 
 SyncChecks.Run(Check);
 CloudChecks.Run(Check);
+LocalApiChecks.Run(Check);
 
 // ---- Web editing ----
 var webPath = Path.Combine(Path.GetTempPath(), "Nagster-web-" + Guid.NewGuid() + ".db");
@@ -552,7 +572,7 @@ uiThread.SetApartmentState(ApartmentState.STA);
 uiThread.Start();
 uiThread.Join();
 if (File.Exists(uiPath)) File.Delete(uiPath);
-Check(uiError is null, "WPF alarm/editor windows construct");
+Check(uiError is null, $"WPF alarm/editor windows construct{(uiError is null ? "" : $" ({uiError.GetType().Name}: {uiError.Message})")}");
 Check(durationSteps.Count == 6 && durationSteps.All(ok => ok), $"event duration links start and end ({string.Join(", ", durationSteps.Select((ok, i) => $"step {i + 1} {(ok ? "ok" : "FAILED")}"))})");
 Check(editSteps.Count == 7 && editSteps.All(ok => ok), $"edit window loads every field of an existing alarm ({string.Join(", ", editSteps.Select((ok, i) => $"step {i + 1} {(ok ? "ok" : "FAILED")}"))})");
 Check(placementSteps.Count == 1 && placementSteps.All(ok => ok), "every window opens centred on the screen");

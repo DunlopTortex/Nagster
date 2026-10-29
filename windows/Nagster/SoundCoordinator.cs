@@ -10,8 +10,8 @@ namespace Nagster;
 /// Plays alarm sounds: each active alarm plays its sound three times, waits a minute and repeats,
 /// with one alarm audible at a time. Sounds go to the output device named in Settings when it is
 /// connected, otherwise to the system default. If Settings has an alarm volume, the device is set to
-/// it for each burst and then restored. Bursts that fall in quiet hours are skipped; the alarm stays
-/// on screen and starts sounding at its next repeat after quiet hours end.
+/// it for each burst and then restored. Bursts that fall in quiet hours or on a quiet day are skipped; the
+/// alarm stays on screen and starts sounding at its next repeat once the quiet period ends.
 /// </summary>
 public sealed class SoundCoordinator
 {
@@ -61,8 +61,8 @@ public sealed class SoundCoordinator
     }
 
     /// <summary>
-    /// Plays a sound once as an alarm would, including the alarm volume; used for previews. Quiet hours
-    /// are deliberately ignored because a preview is something the user asked to hear.
+    /// Plays a sound once as an alarm would, including the alarm volume; used for previews. Quiet hours and
+    /// days are deliberately ignored because a preview is something the user asked to hear.
     /// </summary>
     public static Task Preview(string? selectedSound, SoundOptions options, CancellationToken token) =>
         PlayBurst(selectedSound, options, repeats: 1, token);
