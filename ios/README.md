@@ -44,8 +44,8 @@ Calendar import and Pushover stay on the PC; imported alarms reach the phone thr
 
 ## Building
 
-GitHub Actions builds the app and runs both test suites on every push that touches `ios/` or
-`shared/` (see `.github/workflows/ios.yml`). It builds for the Simulator without signing.
+GitHub Actions builds the app and runs both test suites when you start the **iOS** workflow from the
+Actions tab (see `.github/workflows/ios.yml`). It builds for the Simulator without signing.
 
 On a Mac with Xcode 26:
 
@@ -76,8 +76,8 @@ generate` again resets these signing choices.
 
 ### TestFlight (paid Apple Developer account)
 
-`.github/workflows/testflight.yml` builds, signs and uploads to TestFlight when a tag such as
-`ios-v0.2.0` is pushed (the tag sets the version) or when it's run from the Actions tab. Xcode signs
+`.github/workflows/testflight.yml` builds, signs and uploads to TestFlight when it's run from the
+Actions tab (run it on a tag such as `ios-v0.2.0` and the tag sets the version). Xcode signs
 with the App Store Connect API key, so no certificates are stored in the repository. Until the
 secrets below exist, the workflow skips the upload.
 

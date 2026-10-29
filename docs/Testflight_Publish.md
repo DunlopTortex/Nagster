@@ -1,8 +1,8 @@
 # Publishing a new iPhone build to TestFlight
 
 The **TestFlight** workflow (`.github/workflows/testflight.yml`) builds the iPhone app, signs it and
-uploads it to App Store Connect. Start it in one of two ways: push a version tag, or press **Run
-workflow** on GitHub.
+uploads it to App Store Connect. It only runs when you press **Run workflow** on GitHub; pushing
+commits or tags doesn't start it.
 
 The one-off setup (Apple Developer account, app record, API key and repository secrets) is in the
 [iOS README](../ios/README.md#testflight-paid-apple-developer-account). Without the secrets the
@@ -10,16 +10,24 @@ workflow skips the upload and says so.
 
 ## Version and build numbers
 
-- **Version** is what TestFlight shows, e.g. 0.2.0. A tag `ios-v0.2.0` sets it to 0.2.0. Run from the
-  button, the build uses `MARKETING_VERSION` in `ios/project.yml`.
+- **Version** is what TestFlight shows, e.g. 0.2.0. Run on a tag `ios-v0.2.0`, it's 0.2.0. Run on a
+  branch, the build uses `MARKETING_VERSION` in `ios/project.yml`.
 - **Build number** is set automatically from the workflow's run number, so it always goes up. You
   never need to change it.
 - Several builds can share a version while testing. Use a new version for each release you want to
   tell apart, and a higher one than any version already released on the App Store.
 
-## Option 1: push a tag
+## Run workflow
 
-Tag the commit you want to publish, normally the latest on `main`:
+1. On GitHub, open **Actions → TestFlight**.
+2. Click **Run workflow**, choose the branch (normally `main`) or a version tag, and click **Run
+   workflow**.
+
+The button only appears for workflows on the default branch (`main`). Run on a branch, the version
+comes from `MARKETING_VERSION` in `ios/project.yml`, so update that first if you want a new version.
+
+To set the version with a tag instead, tag the commit you want to publish, then choose the tag in
+step 2:
 
 ```sh
 git checkout main
@@ -28,19 +36,7 @@ git tag -a ios-v0.2.0 -m "iPhone app 0.2.0"
 git push origin ios-v0.2.0
 ```
 
-The tag must start with `ios-v`. Each tag can be used only once; if a build from a tag fails and you
-fix it with a new commit, publish with the next version (e.g. `ios-v0.2.1`).
-
-You can also create the tag on GitHub: **Releases → Draft a new release → Choose a tag**, type the
-new tag name (e.g. `ios-v0.2.0`), choose the target branch, and click **Publish release**.
-
-## Option 2: Run workflow
-
-1. On GitHub, open **Actions → TestFlight**.
-2. Click **Run workflow**, choose the branch (normally `main`) and click **Run workflow**.
-
-The button only appears for workflows on the default branch (`main`). The version comes from
-`MARKETING_VERSION` in `ios/project.yml`, so update that first if you want a new version.
+The tag must start with `ios-v`. Pushing it doesn't start a build by itself.
 
 ## After starting it
 
